@@ -1,35 +1,70 @@
-# Gradle files
+# ==========================================================
+# Tsundoku .gitignore (public repo: keep secrets OUT)
+# ==========================================================
+
+# ---------- Secrets & signing (NEVER commit) ----------
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+keystore.properties
+signing.properties
+release-key*
+upload-key*
+*.base64
+.env
+.env.*
+secrets/
+
+# ---------- Personal / test content ----------
+# No real EPUBs in the repo (copyright + privacy).
+# Tests generate tiny dummy EPUBs in code instead.
+*.epub
+*.bak
+readera*backup*
+
+# ---------- Gradle ----------
 .gradle/
 build/
 .kotlin/
+# Keep the wrapper jar (it is needed to build)
+!gradle/wrapper/gradle-wrapper.jar
 
-# Local configuration file (sdk path, etc)
+# Local configuration file (SDK path, etc.)
 local.properties
 
-# Log/OS Files
-*.log
-
-# Android Studio generated files and folders
+# ---------- Build outputs ----------
+*.apk
+*.aab
+*.ap_
+*.dex
+output-metadata.json
 captures/
 .externalNativeBuild/
 .cxx/
-*.aab
-*.apk
-output-metadata.json
+release/
 
-# IntelliJ
+# ---------- IDEs ----------
+# IntelliJ / Android Studio
 *.iml
 .idea/
 misc.xml
 deploymentTargetDropDown.xml
 render.experimental.xml
+# VS Code (shared settings can be added later on purpose)
+.vscode/*
+!.vscode/extensions.json
+# Kotlin language server caches
+.kotlin-lsp/
+kls_database.db
 
-# Keystore files
-*.jks
-*.keystore
-
-# Google Services (e.g. APIs or Firebase)
-google-services.json
-
-# Android Profiling
+# ---------- OS / logs ----------
+*.log
 *.hprof
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- Google services ----------
+google-services.json
