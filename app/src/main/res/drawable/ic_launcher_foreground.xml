@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher icon: a small pile of book spines in Paper and ink colors.
+     Drawn inside the 66dp safe zone (x/y 21..87) of the 108dp adaptive canvas. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- shelf -->
+    <path android:fillColor="#3B342C" android:pathData="M30,76h48v3h-48z" />
+    <!-- spines -->
+    <path android:fillColor="#A0673E" android:pathData="M32,42h8v34h-8z" />
+    <path android:fillColor="#9C6B7A" android:pathData="M41,36h8v40h-8z" />
+    <path android:fillColor="#7C8B6F" android:pathData="M50,46h7v30h-7z" />
+    <path android:fillColor="#B8935A" android:pathData="M58,40h8v36h-8z" />
+    <!-- leaning book -->
+    <path android:fillColor="#6F7F96" android:pathData="M67.5,46.5l7,-2 8.2,30 -7,2z" />
+    <!-- spine lines -->
+    <path android:fillColor="#FBF7F0" android:pathData="M33.5,47h5v1h-5z M42.5,41h5v1h-5z M51,51h5v1h-5z M59.5,45h5v1h-5z" />
+</vector>
