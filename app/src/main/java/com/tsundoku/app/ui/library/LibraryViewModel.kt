@@ -3,6 +3,7 @@ package com.tsundoku.app.ui.library
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tsundoku.app.data.db.BookEntity
+import com.tsundoku.app.data.db.ReadingStatus
 import com.tsundoku.app.data.settings.AppPreferences
 import com.tsundoku.app.library.LibraryFilter
 import com.tsundoku.app.library.LibraryQuery
@@ -10,6 +11,7 @@ import com.tsundoku.app.library.LibraryRepository
 import com.tsundoku.app.library.LibrarySort
 import com.tsundoku.app.library.LibraryViewMode
 import com.tsundoku.app.library.ScanState
+import com.tsundoku.app.library.TrackingRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,10 +33,15 @@ data class LibraryUiState(
     val filter: LibraryFilter = LibraryFilter.ALL,
     val view: LibraryViewMode = LibraryViewMode.GRID,
     val query: String = "",
-)
+    /** bookId -> status; books not in the map are "Plan to read". */
+    val statuses: Map<Long, ReadingStatus> = emptyMap(),
+) {
+    fun statusOf(bookId: Long): ReadingStatus = statuses[bookId] ?: ReadingStatus.PLAN
+}
 
 class LibraryViewModel(
     private val library: LibraryRepository,
+    private val tracking: TrackingRepository,
     private val preferences: AppPreferences,
 ) : ViewModel() {
 
@@ -43,19 +50,25 @@ class LibraryViewModel(
 
     val scanState: StateFlow<ScanState> = library.scanState
 
+    private val booksWithStatus = combine(library.books, tracking.observeStatuses()) { books, statuses ->
+        books to statuses
+    }
+
     val uiState: StateFlow<LibraryUiState> = combine(
-        library.books,
+        booksWithStatus,
         query,
         preferences.librarySort,
         preferences.libraryFilter,
         preferences.libraryView,
-    ) { books, q, sort, filter, view ->
+    ) { (books, statuses), q, sort, filter, view ->
+        val statusOf: (Long) -> ReadingStatus = { statuses[it] ?: ReadingStatus.PLAN }
         LibraryUiState(
             loaded = true,
-            books = LibraryQuery.apply(books, q, sort, filter),
+            books = LibraryQuery.apply(books, q, sort, filter, statusOf),
             totalCount = books.size,
             totalBytes = books.sumOf { it.sizeBytes },
-            counts = LibraryQuery.counts(books),
+            counts = LibraryQuery.counts(books, statusOf),
+            statuses = statuses,
             sort = sort,
             filter = filter,
             view = view,

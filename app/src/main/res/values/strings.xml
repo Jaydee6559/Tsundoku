@@ -78,4 +78,49 @@
     <string name="filter_series">In a series %1$d</string>
     <string name="filter_standalone">Standalone %1$d</string>
     <string name="filter_broken">Broken %1$d</string>
+    <string name="filter_reading">Reading %1$d</string>
+    <string name="filter_plan">Plan %1$d</string>
+    <string name="filter_completed">Done %1$d</string>
+    <string name="filter_on_hold">On hold %1$d</string>
+    <string name="filter_dropped">Dropped %1$d</string>
+
+    <!-- Reading status -->
+    <string name="status_plan">Plan to read</string>
+    <string name="status_reading">Reading</string>
+    <string name="status_completed">Completed</string>
+    <string name="status_on_hold">On hold</string>
+    <string name="status_dropped">Dropped</string>
+
+    <!-- Book detail -->
+    <string name="detail_back">Back</string>
+    <string name="detail_open_readera">Open in ReadEra</string>
+    <string name="detail_status">Status</string>
+    <string name="detail_progress">Progress</string>
+    <string name="detail_chapter">Ch %1$d</string>
+    <string name="detail_of_total">/ %1$d</string>
+    <string name="detail_of_unknown">/ ?</string>
+    <string name="detail_prev_chapter">Previous chapter</string>
+    <string name="detail_next_chapter">Next chapter</string>
+    <string name="detail_rating">Rating</string>
+    <string name="detail_star">%1$d stars</string>
+    <string name="detail_tags">Tags</string>
+    <string name="detail_add_tag">+ Add</string>
+    <string name="detail_remove_tag">Remove tag %1$s</string>
+    <string name="detail_notes">Notes</string>
+    <string name="detail_notes_hint">Thoughts, where you left off, favorite characters…</string>
+    <string name="detail_file">File</string>
+    <string name="detail_file_info">%1$s · added %2$s</string>
+    <string name="detail_chapters">%1$d chapters</string>
+    <string name="detail_broken">Couldn\'t read this EPUB: %1$s</string>
+    <string name="detail_total_title">Chapter count</string>
+    <string name="detail_total_body">The EPUB says %1$d. Some books count extra pages, so set the real number here. Leave empty to use the EPUB\'s count.</string>
+    <string name="detail_total_edit">Edit chapter count</string>
+    <string name="detail_tag_title">Add a tag</string>
+    <string name="detail_tag_hint">fantasy, slow burn, translated…</string>
+    <string name="action_save">Save</string>
+    <string name="action_add">Add</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="open_missing">This file isn\'t on your phone any more.</string>
+    <string name="open_no_reader">No EPUB reader found. Install ReadEra to open books.</string>
+    <string name="detail_not_found">This book is no longer in your library.</string>
 </resources>

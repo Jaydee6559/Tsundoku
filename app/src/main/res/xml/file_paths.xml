@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Which files Tsundoku may hand to a reader app.
+    A link is only created when you tap "Open in ReadEra", for that single book,
+    and the reader only gets permission to READ it.
+-->
+<paths>
+    <external-path name="storage" path="." />
+</paths>

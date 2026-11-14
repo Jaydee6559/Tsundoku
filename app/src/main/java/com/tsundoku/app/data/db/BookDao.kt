@@ -15,6 +15,12 @@ abstract class BookDao {
     @Query("SELECT * FROM books WHERE isMissing = 0 ORDER BY addedAt DESC, title COLLATE NOCASE")
     abstract fun observeLibrary(): Flow<List<BookEntity>>
 
+    @Query("SELECT * FROM books WHERE id = :id")
+    abstract fun observeBook(id: Long): Flow<BookEntity?>
+
+    @Query("SELECT * FROM books WHERE id = :id")
+    abstract suspend fun getById(id: Long): BookEntity?
+
     @Query("SELECT id, path, sizeBytes, lastModified, fingerprint, isMissing FROM books")
     abstract suspend fun scanRows(): List<BookScanRow>
 

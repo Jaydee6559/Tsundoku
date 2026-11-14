@@ -1,6 +1,7 @@
 package com.tsundoku.app.library
 
 import com.tsundoku.app.data.db.BookEntity
+import com.tsundoku.app.data.db.ReadingStatus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -118,5 +119,21 @@ class LibraryQueryTest {
     fun `natural order`() {
         val sorted = listOf("vol 10", "vol 2", "vol 1", "vol 002b").sortedWith(NaturalOrder)
         assertEquals(listOf("vol 1", "vol 2", "vol 002b", "vol 10"), sorted)
+    }
+
+    @Test
+    fun `status filters use tracking, untracked books count as plan to read`() {
+        val a = book("A")
+        val b = book("B")
+        val c = book("C")
+        val statuses = mapOf(a.id to ReadingStatus.READING, b.id to ReadingStatus.COMPLETED)
+        val statusOf: (Long) -> ReadingStatus = { statuses[it] ?: ReadingStatus.PLAN }
+        val books = listOf(a, b, c)
+        assertEquals(listOf("A"), titles(LibraryQuery.apply(books, "", LibrarySort.TITLE, LibraryFilter.READING, statusOf)))
+        assertEquals(listOf("B"), titles(LibraryQuery.apply(books, "", LibrarySort.TITLE, LibraryFilter.COMPLETED, statusOf)))
+        assertEquals(listOf("C"), titles(LibraryQuery.apply(books, "", LibrarySort.TITLE, LibraryFilter.PLAN, statusOf)))
+        val counts = LibraryQuery.counts(books, statusOf)
+        assertEquals(1, counts[LibraryFilter.READING])
+        assertEquals(0, counts[LibraryFilter.DROPPED])
     }
 }

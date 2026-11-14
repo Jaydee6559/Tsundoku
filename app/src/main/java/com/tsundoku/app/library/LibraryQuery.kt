@@ -1,13 +1,15 @@
 package com.tsundoku.app.library
 
 import com.tsundoku.app.data.db.BookEntity
+import com.tsundoku.app.data.db.ReadingStatus
 import java.text.Normalizer
 
 enum class LibraryViewMode { GRID, LIST }
 
 enum class LibrarySort { RECENT, TITLE, AUTHOR, SERIES, SIZE }
 
-enum class LibraryFilter { ALL, IN_SERIES, STANDALONE, BROKEN }
+/** Filter chips, in display order. Status filters use your tracking; the rest use book data. */
+enum class LibraryFilter { ALL, READING, PLAN, COMPLETED, ON_HOLD, DROPPED, IN_SERIES, STANDALONE, BROKEN }
 
 /**
  * Search, filter and sort, done in memory. For a library of hundreds (even a few
@@ -21,22 +23,31 @@ object LibraryQuery {
         query: String,
         sort: LibrarySort,
         filter: LibraryFilter,
+        statusOf: (Long) -> ReadingStatus = { ReadingStatus.PLAN },
     ): List<BookEntity> {
         val tokens = normalize(query).split(' ').filter { it.isNotEmpty() }
         return books
             .asSequence()
-            .filter { matchesFilter(it, filter) }
+            .filter { matchesFilter(it, filter, statusOf) }
             .filter { tokens.isEmpty() || matchesSearch(it, tokens) }
             .sortedWith(comparator(sort))
             .toList()
     }
 
     /** How many books each filter chip would show (ignores the search text). */
-    fun counts(books: List<BookEntity>): Map<LibraryFilter, Int> =
-        LibraryFilter.entries.associateWith { f -> books.count { matchesFilter(it, f) } }
+    fun counts(
+        books: List<BookEntity>,
+        statusOf: (Long) -> ReadingStatus = { ReadingStatus.PLAN },
+    ): Map<LibraryFilter, Int> =
+        LibraryFilter.entries.associateWith { f -> books.count { matchesFilter(it, f, statusOf) } }
 
-    private fun matchesFilter(book: BookEntity, filter: LibraryFilter): Boolean = when (filter) {
+    private fun matchesFilter(book: BookEntity, filter: LibraryFilter, statusOf: (Long) -> ReadingStatus): Boolean = when (filter) {
         LibraryFilter.ALL -> true
+        LibraryFilter.READING -> statusOf(book.id) == ReadingStatus.READING
+        LibraryFilter.PLAN -> statusOf(book.id) == ReadingStatus.PLAN
+        LibraryFilter.COMPLETED -> statusOf(book.id) == ReadingStatus.COMPLETED
+        LibraryFilter.ON_HOLD -> statusOf(book.id) == ReadingStatus.ON_HOLD
+        LibraryFilter.DROPPED -> statusOf(book.id) == ReadingStatus.DROPPED
         LibraryFilter.IN_SERIES -> book.seriesName != null
         LibraryFilter.STANDALONE -> book.seriesName == null
         LibraryFilter.BROKEN -> book.parseError != null

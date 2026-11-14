@@ -1,6 +1,7 @@
 package com.tsundoku.app.ui.library
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -26,13 +27,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tsundoku.app.R
 import com.tsundoku.app.data.db.BookEntity
+import com.tsundoku.app.data.db.ReadingStatus
+import com.tsundoku.app.ui.components.StatusDotLabel
 import com.tsundoku.app.ui.components.CoverImage
 import com.tsundoku.app.ui.theme.TsundokuTheme
 
 /** One cover in the grid: cover, title, then author or series (design PDF page 3, middle). */
 @Composable
-fun BookGridItem(book: BookEntity, modifier: Modifier = Modifier) {
-    Column(modifier) {
+fun BookGridItem(book: BookEntity, status: ReadingStatus, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier.clickable(onClick = onClick)) {
         CoverImage(
             thumbPath = book.coverThumbPath,
             title = book.title,
@@ -51,9 +54,7 @@ fun BookGridItem(book: BookEntity, modifier: Modifier = Modifier) {
             overflow = TextOverflow.Ellipsis,
         )
         val line = seriesLabel(book) ?: book.authors
-        if (book.parseError != null) {
-            BrokenLabel()
-        } else if (line != null) {
+        if (line != null) {
             Text(
                 line,
                 fontSize = 11.sp,
@@ -63,13 +64,19 @@ fun BookGridItem(book: BookEntity, modifier: Modifier = Modifier) {
                 overflow = TextOverflow.Ellipsis,
             )
         }
+        if (book.parseError != null) BrokenLabel() else StatusDotLabel(status, Modifier.padding(top = 2.dp))
     }
 }
 
 /** One row in the list view. */
 @Composable
-fun BookListRow(book: BookEntity, modifier: Modifier = Modifier) {
-    Row(modifier.padding(vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
+fun BookListRow(book: BookEntity, status: ReadingStatus, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier
+            .clickable(onClick = onClick)
+            .padding(vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         CoverImage(
             thumbPath = book.coverThumbPath,
             title = book.title,
@@ -94,7 +101,7 @@ fun BookListRow(book: BookEntity, modifier: Modifier = Modifier) {
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            if (book.parseError != null) BrokenLabel()
+            if (book.parseError != null) BrokenLabel() else StatusDotLabel(status, Modifier.padding(top = 3.dp))
         }
         Spacer(Modifier.width(8.dp))
         LocationChip(book.folder)

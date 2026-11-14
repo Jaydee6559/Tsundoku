@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -21,21 +23,25 @@ import androidx.navigation.compose.rememberNavController
 import com.tsundoku.app.R
 import com.tsundoku.app.data.settings.AppPreferences
 import com.tsundoku.app.library.LibraryRepository
+import com.tsundoku.app.library.TrackingRepository
+import com.tsundoku.app.ui.book.BookDetailScreen
 import com.tsundoku.app.ui.library.LibraryScreen
 import com.tsundoku.app.ui.navigation.TopLevelDestination
 import com.tsundoku.app.ui.screens.HomeScreen
 import com.tsundoku.app.ui.screens.PlaceholderScreen
 
 @Composable
-fun TsundokuApp(library: LibraryRepository, preferences: AppPreferences) {
+fun TsundokuApp(library: LibraryRepository, tracking: TrackingRepository, preferences: AppPreferences) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
+    // The book screen is full height: no bottom bar there.
+    val showBottomBar = currentDestination?.route != BOOK_ROUTE
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+            if (showBottomBar) NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
                 TopLevelDestination.entries.forEach { dest ->
                     val selected = currentDestination?.hierarchy?.any { it.route == dest.route } == true
                     NavigationBarItem(
@@ -73,7 +79,21 @@ fun TsundokuApp(library: LibraryRepository, preferences: AppPreferences) {
             modifier = Modifier.padding(innerPadding),
         ) {
             composable(TopLevelDestination.HOME.route) { HomeScreen() }
-            composable(TopLevelDestination.LIBRARY.route) { LibraryScreen(library, preferences) }
+            composable(TopLevelDestination.LIBRARY.route) {
+                LibraryScreen(
+                    library = library,
+                    tracking = tracking,
+                    preferences = preferences,
+                    onBookClick = { id -> navController.navigate("book/$id") },
+                )
+            }
+            composable(BOOK_ROUTE, arguments = listOf(navArgument("bookId") { type = NavType.LongType })) { entry ->
+                BookDetailScreen(
+                    bookId = entry.arguments?.getLong("bookId") ?: 0L,
+                    tracking = tracking,
+                    onBack = { navController.popBackStack() },
+                )
+            }
             composable(TopLevelDestination.SERIES.route) {
                 PlaceholderScreen(R.string.tab_series, R.string.placeholder_series)
             }
@@ -83,3 +103,5 @@ fun TsundokuApp(library: LibraryRepository, preferences: AppPreferences) {
         }
     }
 }
+
+private const val BOOK_ROUTE = "book/{bookId}"

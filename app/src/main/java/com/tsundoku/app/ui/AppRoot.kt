@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tsundoku.app.data.settings.AppPreferences
 import com.tsundoku.app.library.LibraryRepository
+import com.tsundoku.app.library.TrackingRepository
 import com.tsundoku.app.storage.StoragePermission
 import com.tsundoku.app.ui.onboarding.OnboardingFlow
 import kotlinx.coroutines.launch
@@ -28,7 +29,7 @@ import kotlinx.coroutines.launch
  *  - otherwise the main app.
  */
 @Composable
-fun AppRoot(preferences: AppPreferences, library: LibraryRepository) {
+fun AppRoot(preferences: AppPreferences, library: LibraryRepository, tracking: TrackingRepository) {
     val scope = rememberCoroutineScope()
     val onboardingDone by preferences.onboardingDone.collectAsStateWithLifecycle(initialValue = null)
     val scanState by library.scanState.collectAsStateWithLifecycle()
@@ -59,7 +60,7 @@ fun AppRoot(preferences: AppPreferences, library: LibraryRepository) {
         else -> {
             // Quick sync on every app start: only new/changed files are read, so it's cheap.
             LaunchedEffect(Unit) { library.startScan() }
-            TsundokuApp(library = library, preferences = preferences)
+            TsundokuApp(library = library, tracking = tracking, preferences = preferences)
         }
     }
 }

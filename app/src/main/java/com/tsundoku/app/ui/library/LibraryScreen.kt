@@ -69,12 +69,18 @@ import com.tsundoku.app.library.LibraryRepository
 import com.tsundoku.app.library.LibrarySort
 import com.tsundoku.app.library.LibraryViewMode
 import com.tsundoku.app.library.ScanState
+import com.tsundoku.app.library.TrackingRepository
 import com.tsundoku.app.library.isRunning
 
 /** The Library tab: grid or list, search, sort and filters (design PDF page 3). */
 @Composable
-fun LibraryScreen(library: LibraryRepository, preferences: AppPreferences) {
-    val vm: LibraryViewModel = viewModel { LibraryViewModel(library, preferences) }
+fun LibraryScreen(
+    library: LibraryRepository,
+    tracking: TrackingRepository,
+    preferences: AppPreferences,
+    onBookClick: (Long) -> Unit,
+) {
+    val vm: LibraryViewModel = viewModel { LibraryViewModel(library, tracking, preferences) }
     val state by vm.uiState.collectAsStateWithLifecycle()
     val scan by vm.scanState.collectAsStateWithLifecycle()
     val searchText by vm.searchText.collectAsStateWithLifecycle()
@@ -128,14 +134,16 @@ fun LibraryScreen(library: LibraryRepository, preferences: AppPreferences) {
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxSize(),
             ) {
-                items(state.books, key = { it.id }) { book -> BookGridItem(book) }
+                items(state.books, key = { it.id }) { book ->
+                    BookGridItem(book, state.statusOf(book.id), onClick = { onBookClick(book.id) })
+                }
             }
             else -> LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
                 modifier = Modifier.fillMaxSize(),
             ) {
                 items(state.books, key = { it.id }) { book ->
-                    BookListRow(book)
+                    BookListRow(book, state.statusOf(book.id), onClick = { onBookClick(book.id) })
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 }
             }
@@ -263,7 +271,8 @@ private fun SearchBar(text: String, onTextChange: (String) -> Unit, onClose: () 
 
 @Composable
 private fun FilterRow(filter: LibraryFilter, counts: Map<LibraryFilter, Int>, onFilter: (LibraryFilter) -> Unit) {
-    val visible = LibraryFilter.entries.filter { it != LibraryFilter.BROKEN || (counts[it] ?: 0) > 0 || filter == it }
+    // Hide empty chips (except "All" and the selected one) to keep the row short.
+    val visible = LibraryFilter.entries.filter { it == LibraryFilter.ALL || it == filter || (counts[it] ?: 0) > 0 }
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -353,6 +362,11 @@ private fun LibrarySort.label(): Int = when (this) {
 
 private fun LibraryFilter.label(): Int = when (this) {
     LibraryFilter.ALL -> R.string.filter_all
+    LibraryFilter.READING -> R.string.filter_reading
+    LibraryFilter.PLAN -> R.string.filter_plan
+    LibraryFilter.COMPLETED -> R.string.filter_completed
+    LibraryFilter.ON_HOLD -> R.string.filter_on_hold
+    LibraryFilter.DROPPED -> R.string.filter_dropped
     LibraryFilter.IN_SERIES -> R.string.filter_series
     LibraryFilter.STANDALONE -> R.string.filter_standalone
     LibraryFilter.BROKEN -> R.string.filter_broken

@@ -7,6 +7,7 @@ import com.tsundoku.app.diagnostics.CrashLog
 import com.tsundoku.app.library.EpubDiscovery
 import com.tsundoku.app.library.LibraryRepository
 import com.tsundoku.app.library.LibraryScanner
+import com.tsundoku.app.library.TrackingRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -45,4 +46,6 @@ class AppContainer(application: Application) {
             scope = appScope,
         )
     }
+
+    val tracking: TrackingRepository by lazy { TrackingRepository(database, appScope) }
 }
