@@ -20,31 +20,34 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.tsundoku.app.R
 import com.tsundoku.app.data.settings.AppPreferences
 import com.tsundoku.app.library.LibraryRepository
 import com.tsundoku.app.library.TrackingRepository
 import com.tsundoku.app.library.TrashRepository
+import com.tsundoku.app.library.SeriesRepository
+import com.tsundoku.app.ui.series.SeriesDetailScreen
+import com.tsundoku.app.ui.series.SeriesListScreen
+import android.net.Uri
 import com.tsundoku.app.ui.settings.SettingsScreen
 import com.tsundoku.app.ui.trash.TrashScreen
 import com.tsundoku.app.ui.book.BookDetailScreen
 import com.tsundoku.app.ui.library.LibraryScreen
 import com.tsundoku.app.ui.navigation.TopLevelDestination
 import com.tsundoku.app.ui.screens.HomeScreen
-import com.tsundoku.app.ui.screens.PlaceholderScreen
 
 @Composable
 fun TsundokuApp(
     library: LibraryRepository,
     tracking: TrackingRepository,
     trash: TrashRepository,
+    series: SeriesRepository,
     preferences: AppPreferences,
 ) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     // Full-height screens: no bottom bar there.
-    val showBottomBar = currentDestination?.route !in setOf(BOOK_ROUTE, TRASH_ROUTE)
+    val showBottomBar = currentDestination?.route !in setOf(BOOK_ROUTE, TRASH_ROUTE, SERIES_ROUTE)
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -108,7 +111,19 @@ fun TsundokuApp(
                 TrashScreen(trash = trash, onBack = { navController.popBackStack() })
             }
             composable(TopLevelDestination.SERIES.route) {
-                PlaceholderScreen(R.string.tab_series, R.string.placeholder_series)
+                SeriesListScreen(
+                    seriesRepo = series,
+                    onOpenSeries = { key -> navController.navigate("series/${Uri.encode(key)}") },
+                )
+            }
+            composable(SERIES_ROUTE, arguments = listOf(navArgument("key") { type = NavType.StringType })) { entry ->
+                SeriesDetailScreen(
+                    seriesKey = entry.arguments?.getString("key").orEmpty(),
+                    seriesRepo = series,
+                    tracking = tracking,
+                    onBack = { navController.popBackStack() },
+                    onOpenBook = { id -> navController.navigate("book/$id") },
+                )
             }
             composable(TopLevelDestination.SETTINGS.route) {
                 SettingsScreen(library = library, trash = trash, onOpenTrash = { navController.navigate(TRASH_ROUTE) })
@@ -119,3 +134,4 @@ fun TsundokuApp(
 
 private const val BOOK_ROUTE = "book/{bookId}"
 private const val TRASH_ROUTE = "trash"
+private const val SERIES_ROUTE = "series/{key}"

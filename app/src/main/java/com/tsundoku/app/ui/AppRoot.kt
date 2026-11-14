@@ -24,6 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tsundoku.app.data.settings.AppPreferences
 import com.tsundoku.app.library.LibraryRepository
 import com.tsundoku.app.library.LiveWatcher
+import com.tsundoku.app.library.SeriesRepository
 import com.tsundoku.app.library.TrackingRepository
 import com.tsundoku.app.library.TrashRepository
 import com.tsundoku.app.storage.StoragePermission
@@ -42,6 +43,7 @@ fun AppRoot(
     library: LibraryRepository,
     tracking: TrackingRepository,
     trash: TrashRepository,
+    series: SeriesRepository,
     watcher: LiveWatcher,
 ) {
     val scope = rememberCoroutineScope()
@@ -85,7 +87,7 @@ fun AppRoot(
                     PackageManager.PERMISSION_GRANTED
                 if (!granted) askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
-            TsundokuApp(library = library, tracking = tracking, trash = trash, preferences = preferences)
+            TsundokuApp(library = library, tracking = tracking, trash = trash, series = series, preferences = preferences)
         }
     }
 }

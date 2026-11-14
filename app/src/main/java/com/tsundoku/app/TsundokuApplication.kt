@@ -8,6 +8,7 @@ import com.tsundoku.app.library.EpubDiscovery
 import com.tsundoku.app.library.LibraryRepository
 import com.tsundoku.app.library.LiveWatcher
 import com.tsundoku.app.library.ScanState
+import com.tsundoku.app.library.SeriesRepository
 import com.tsundoku.app.library.LibraryScanner
 import com.tsundoku.app.library.TrackingRepository
 import com.tsundoku.app.library.TrashRepository
@@ -72,6 +73,8 @@ class AppContainer(application: Application) {
             lock = libraryLock,
         )
     }
+
+    val series: SeriesRepository by lazy { SeriesRepository(database, tracking) }
 
     val notifier: NewBooksNotifier by lazy { NewBooksNotifier(application) }
 

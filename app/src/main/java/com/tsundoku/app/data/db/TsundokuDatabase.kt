@@ -17,13 +17,15 @@ import androidx.room.RoomDatabase
         TagEntity::class,
         BookTagEntity::class,
         StatusEventEntity::class,
+        SeriesInfoEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class TsundokuDatabase : RoomDatabase() {
     abstract fun bookDao(): BookDao
     abstract fun trackingDao(): TrackingDao
+    abstract fun seriesDao(): SeriesDao
 
     companion object {
         private const val NAME = "tsundoku.db"

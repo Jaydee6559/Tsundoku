@@ -27,6 +27,7 @@ class MainActivity : ComponentActivity() {
                     library = container.library,
                     tracking = container.tracking,
                     trash = container.trash,
+                    series = container.series,
                     watcher = container.watcher,
                 )
 

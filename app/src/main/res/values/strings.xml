@@ -45,6 +45,29 @@
     <string name="scan_found_in">Found in</string>
     <string name="scan_skipped">Skipped: %1$s</string>
 
+    <!-- Series -->
+    <string name="series_filter_all">All %1$d</string>
+    <string name="series_filter_ongoing">Ongoing %1$d</string>
+    <string name="series_filter_gaps">Has gaps %1$d</string>
+    <string name="series_filter_completed">Completed %1$d</string>
+    <string name="series_filter_new">New %1$d</string>
+    <string name="series_read_of">%1$d of %2$d read</string>
+    <string name="series_volumes">%1$d volumes</string>
+    <string name="series_missing_one">Missing Vol %1$s</string>
+    <string name="series_missing_more">Missing Vol %1$s +%2$d</string>
+    <string name="series_new">New</string>
+    <string name="series_empty_title">No series yet</string>
+    <string name="series_empty_body">Books with a series name in their EPUB info, or a volume number in the file name, are grouped here.</string>
+    <string name="series_empty_filter">No series in this filter.</string>
+    <string name="series_status_ongoing">Ongoing</string>
+    <string name="series_status_completed">Completed</string>
+    <string name="series_status_hiatus">Hiatus</string>
+    <string name="series_status_unset">Set status</string>
+    <string name="series_status_clear">No status</string>
+    <string name="series_missing_title">Vol %1$d · Missing</string>
+    <string name="series_missing_body">Not found on your phone</string>
+    <string name="series_not_found">This series is no longer in your library.</string>
+
     <!-- Notifications -->
     <string name="notify_channel_name">New books</string>
     <string name="notify_channel_desc">When new EPUBs appear on your phone</string>
