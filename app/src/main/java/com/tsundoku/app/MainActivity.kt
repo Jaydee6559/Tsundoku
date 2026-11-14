@@ -21,7 +21,12 @@ class MainActivity : ComponentActivity() {
         val lastCrash = CrashLog.read(this)
         setContent {
             TsundokuTheme {
-                AppRoot(preferences = container.preferences, library = container.library, tracking = container.tracking)
+                AppRoot(
+                    preferences = container.preferences,
+                    library = container.library,
+                    tracking = container.tracking,
+                    trash = container.trash,
+                )
 
                 var crashReport by rememberSaveable { mutableStateOf(lastCrash) }
                 crashReport?.let { report ->

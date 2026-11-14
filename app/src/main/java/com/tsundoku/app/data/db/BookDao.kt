@@ -11,9 +11,31 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 abstract class BookDao {
 
-    /** Books that exist on the phone, newest first. Updates the UI automatically. */
-    @Query("SELECT * FROM books WHERE isMissing = 0 ORDER BY addedAt DESC, title COLLATE NOCASE")
+    /** Books that exist on the phone (not missing, not in Trash). Updates the UI automatically. */
+    @Query("SELECT * FROM books WHERE isMissing = 0 AND trashedAt IS NULL ORDER BY addedAt DESC, title COLLATE NOCASE")
     abstract fun observeLibrary(): Flow<List<BookEntity>>
+
+    /** Books in Trash, most recently trashed first. */
+    @Query("SELECT * FROM books WHERE trashedAt IS NOT NULL ORDER BY trashedAt DESC")
+    abstract fun observeTrash(): Flow<List<BookEntity>>
+
+    @Query("SELECT * FROM books WHERE trashedAt IS NOT NULL")
+    abstract suspend fun getTrashed(): List<BookEntity>
+
+    @Query("UPDATE books SET path = :trashPath, originalPath = :originalPath, trashedAt = :now, updatedAt = :now WHERE id = :id")
+    abstract suspend fun markTrashed(id: Long, trashPath: String, originalPath: String, now: Long)
+
+    @Query(
+        "UPDATE books SET path = :path, fileName = :fileName, folder = :folder, originalPath = NULL, " +
+            "trashedAt = NULL, isMissing = 0, updatedAt = :now WHERE id = :id",
+    )
+    abstract suspend fun markRestored(id: Long, path: String, fileName: String, folder: String, now: Long)
+
+    @Query("DELETE FROM books WHERE id IN (:ids)")
+    abstract suspend fun deleteByIds(ids: List<Long>)
+
+    @Query("SELECT COUNT(*) FROM books WHERE fingerprint = :fingerprint")
+    abstract suspend fun countWithFingerprint(fingerprint: String): Int
 
     @Query("SELECT * FROM books WHERE id = :id")
     abstract fun observeBook(id: Long): Flow<BookEntity?>
@@ -21,7 +43,8 @@ abstract class BookDao {
     @Query("SELECT * FROM books WHERE id = :id")
     abstract suspend fun getById(id: Long): BookEntity?
 
-    @Query("SELECT id, path, sizeBytes, lastModified, fingerprint, isMissing FROM books")
+    /** Trashed books are left out: their files live in a hidden folder the scan skips on purpose. */
+    @Query("SELECT id, path, sizeBytes, lastModified, fingerprint, isMissing FROM books WHERE trashedAt IS NULL")
     abstract suspend fun scanRows(): List<BookScanRow>
 
     @Query("SELECT * FROM books WHERE id IN (:ids)")

@@ -51,6 +51,12 @@ data class BookEntity(
     @ColumnInfo(defaultValue = "0") val isMissing: Boolean = false,
     val addedAt: Long,
     val updatedAt: Long,
+
+    // ---- trash (DB v3). While trashed, [path] points into /.tsundoku/trash.
+    /** When the book was moved to Trash (null = not in Trash). */
+    val trashedAt: Long? = null,
+    /** Where the file lived before it was trashed; used by Restore. */
+    val originalPath: String? = null,
 )
 
 /** The few columns the scanner needs to compare the database with what's on disk. */

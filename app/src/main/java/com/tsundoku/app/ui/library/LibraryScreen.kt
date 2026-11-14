@@ -42,6 +42,10 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -70,86 +74,189 @@ import com.tsundoku.app.library.LibrarySort
 import com.tsundoku.app.library.LibraryViewMode
 import com.tsundoku.app.library.ScanState
 import com.tsundoku.app.library.TrackingRepository
+import com.tsundoku.app.library.TrashRepository
+import com.tsundoku.app.ui.trash.ConfirmDialog
 import com.tsundoku.app.library.isRunning
 
-/** The Library tab: grid or list, search, sort and filters (design PDF page 3). */
+/** The Library tab: grid or list, search, sort, filters, multi-select and swipe (design PDF pages 3 and 6). */
 @Composable
 fun LibraryScreen(
     library: LibraryRepository,
     tracking: TrackingRepository,
+    trash: TrashRepository,
     preferences: AppPreferences,
     onBookClick: (Long) -> Unit,
 ) {
-    val vm: LibraryViewModel = viewModel { LibraryViewModel(library, tracking, preferences) }
+    val vm: LibraryViewModel = viewModel { LibraryViewModel(library, tracking, trash, preferences) }
     val state by vm.uiState.collectAsStateWithLifecycle()
     val scan by vm.scanState.collectAsStateWithLifecycle()
     val searchText by vm.searchText.collectAsStateWithLifecycle()
+    val selected by vm.selected.collectAsStateWithLifecycle()
     var searching by rememberSaveable { mutableStateOf(false) }
+    val selecting = selected.isNotEmpty()
 
-    BackHandler(enabled = searching) {
-        searching = false
-        vm.setQuery("")
+    // Dialogs, and which books they act on (one from a swipe, or the whole selection).
+    var statusFor by remember { mutableStateOf<List<Long>?>(null) }
+    var tagFor by remember { mutableStateOf<List<Long>?>(null) }
+    var confirmTrash by remember { mutableStateOf<List<Long>?>(null) }
+
+    val snackbar = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    LaunchedEffect(vm) {
+        vm.events.collect { event ->
+            when (event) {
+                is LibraryViewModel.Event.Trashed -> {
+                    val result = snackbar.showSnackbar(
+                        message = context.getString(R.string.trash_moved, event.count),
+                        actionLabel = context.getString(R.string.trash_undo),
+                        duration = SnackbarDuration.Long,
+                    )
+                    if (result == SnackbarResult.ActionPerformed) vm.undoTrash(event.ids)
+                }
+                is LibraryViewModel.Event.Restored ->
+                    snackbar.showSnackbar(context.getString(R.string.trash_restored, event.count))
+            }
+        }
     }
 
-    Column(Modifier.fillMaxSize()) {
-        if (searching) {
-            SearchBar(
-                text = searchText,
-                onTextChange = vm::setQuery,
-                onClose = {
-                    searching = false
-                    vm.setQuery("")
-                },
-            )
+    BackHandler(enabled = searching || selecting) {
+        if (selecting) {
+            vm.clearSelection()
         } else {
-            TitleBar(
-                view = state.view,
-                sort = state.sort,
-                scanRunning = scan.isRunning,
-                onSearch = { searching = true },
-                onSort = vm::setSort,
-                onToggleView = { vm.toggleView(state.view) },
-                onScan = vm::scan,
-            )
+            searching = false
+            vm.setQuery("")
         }
+    }
 
-        FilterRow(filter = state.filter, counts = state.counts, onFilter = vm::setFilter)
-        SummaryRow(state = state, scan = scan)
+    // A tap opens the book, or (while selecting) adds it to / removes it from the selection.
+    val onTap: (Long) -> Unit = { id -> if (selecting) vm.toggleSelected(id) else onBookClick(id) }
+    val onLong: (Long) -> Unit = { id -> vm.toggleSelected(id) }
+    val trashAsk: (List<Long>) -> Unit = { ids ->
+        if (ids.size >= CONFIRM_TRASH_AT) confirmTrash = ids else vm.moveToTrash(ids)
+    }
 
-        when {
-            !state.loaded -> Unit
-            state.totalCount == 0 && !scan.isRunning -> Message(
-                stringResource(R.string.library_empty_title),
-                stringResource(R.string.library_empty_body),
-            )
-            state.books.isEmpty() && state.query.isNotBlank() -> Message(
-                stringResource(R.string.library_no_results_title),
-                stringResource(R.string.library_no_results_body, state.query),
-            )
-            state.books.isEmpty() -> Message(null, stringResource(R.string.library_no_filter_results))
-            state.view == LibraryViewMode.GRID -> LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 100.dp),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                items(state.books, key = { it.id }) { book ->
-                    BookGridItem(book, state.statusOf(book.id), onClick = { onBookClick(book.id) })
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize()) {
+            when {
+                selecting -> SelectionBar(
+                    count = selected.size,
+                    onClose = vm::clearSelection,
+                    onSelectAll = { vm.selectAll(state.books.map { it.id }) },
+                    onStatus = { statusFor = selected.toList() },
+                    onTag = { tagFor = selected.toList() },
+                    onTrash = { trashAsk(selected.toList()) },
+                )
+                searching -> SearchBar(
+                    text = searchText,
+                    onTextChange = vm::setQuery,
+                    onClose = {
+                        searching = false
+                        vm.setQuery("")
+                    },
+                )
+                else -> TitleBar(
+                    view = state.view,
+                    sort = state.sort,
+                    scanRunning = scan.isRunning,
+                    onSearch = { searching = true },
+                    onSort = vm::setSort,
+                    onToggleView = { vm.toggleView(state.view) },
+                    onScan = vm::scan,
+                )
+            }
+
+            FilterRow(filter = state.filter, counts = state.counts, onFilter = vm::setFilter)
+            SummaryRow(state = state, scan = scan)
+
+            when {
+                !state.loaded -> Unit
+                state.totalCount == 0 && !scan.isRunning -> Message(
+                    stringResource(R.string.library_empty_title),
+                    stringResource(R.string.library_empty_body),
+                )
+                state.books.isEmpty() && state.query.isNotBlank() -> Message(
+                    stringResource(R.string.library_no_results_title),
+                    stringResource(R.string.library_no_results_body, state.query),
+                )
+                state.books.isEmpty() -> Message(null, stringResource(R.string.library_no_filter_results))
+                state.view == LibraryViewMode.GRID -> LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 100.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    items(state.books, key = { it.id }) { book ->
+                        BookGridItem(
+                            book = book,
+                            status = state.statusOf(book.id),
+                            selected = book.id in selected,
+                            onClick = { onTap(book.id) },
+                            onLongClick = { onLong(book.id) },
+                        )
+                    }
+                }
+                else -> LazyColumn(
+                    contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 88.dp),
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    items(state.books, key = { it.id }) { book ->
+                        SwipeableRow(
+                            enabled = !selecting,
+                            onSwipeStatus = { statusFor = listOf(book.id) },
+                            onSwipeTrash = { vm.moveToTrash(listOf(book.id)) },
+                        ) {
+                            BookListRow(
+                                book = book,
+                                status = state.statusOf(book.id),
+                                selected = book.id in selected,
+                                onClick = { onTap(book.id) },
+                                onLongClick = { onLong(book.id) },
+                            )
+                        }
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    }
                 }
             }
-            else -> LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                items(state.books, key = { it.id }) { book ->
-                    BookListRow(book, state.statusOf(book.id), onClick = { onBookClick(book.id) })
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                }
-            }
         }
+
+        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(12.dp))
+    }
+
+    statusFor?.let { ids ->
+        StatusPickerDialog(
+            onPick = {
+                vm.setStatus(ids, it)
+                statusFor = null
+            },
+            onDismiss = { statusFor = null },
+        )
+    }
+    tagFor?.let { ids ->
+        AddTagDialog(
+            onAdd = {
+                vm.addTag(ids, it)
+                tagFor = null
+            },
+            onDismiss = { tagFor = null },
+        )
+    }
+    confirmTrash?.let { ids ->
+        ConfirmDialog(
+            title = stringResource(R.string.select_confirm_title, ids.size),
+            body = stringResource(R.string.select_confirm_body),
+            confirm = stringResource(R.string.select_delete),
+            onConfirm = {
+                vm.moveToTrash(ids)
+                confirmTrash = null
+            },
+            onDismiss = { confirmTrash = null },
+        )
     }
 }
+
+/** Moving this many books or more asks first. */
+private const val CONFIRM_TRASH_AT = 10
 
 // ------------------------------------------------------------------ top bars
 

@@ -27,6 +27,7 @@ import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material.icons.outlined.Star
@@ -66,6 +67,7 @@ import com.tsundoku.app.data.db.ReadingStatus
 import com.tsundoku.app.library.BookDetail
 import com.tsundoku.app.library.TrackingRepository
 import com.tsundoku.app.library.TrackingRules
+import com.tsundoku.app.library.TrashRepository
 import com.tsundoku.app.reader.ReaderLauncher
 import com.tsundoku.app.ui.components.CoverImage
 import com.tsundoku.app.ui.components.labelRes
@@ -77,14 +79,30 @@ import java.util.Date
 
 /** One book: Open in ReadEra, status, progress, rating, tags, notes (design PDF page 4). */
 @Composable
-fun BookDetailScreen(bookId: Long, tracking: TrackingRepository, onBack: () -> Unit) {
+fun BookDetailScreen(bookId: Long, tracking: TrackingRepository, trash: TrashRepository, onBack: () -> Unit) {
     val vm: BookDetailViewModel = viewModel(key = "book-$bookId") { BookDetailViewModel(bookId, tracking) }
     val state by vm.state.collectAsStateWithLifecycle()
 
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.padding(start = 4.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        val context = LocalContext.current
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(start = 4.dp, end = 4.dp, top = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             IconButton(onClick = onBack) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.detail_back))
+            }
+            Spacer(Modifier.weight(1f))
+            if (state.detail?.book?.trashedAt == null && state.detail != null) {
+                IconButton(onClick = {
+                    trash.moveToTrashInBackground(listOf(bookId))
+                    Toast.makeText(context, context.getString(R.string.trash_moved, 1), Toast.LENGTH_SHORT).show()
+                    onBack()
+                }) {
+                    Icon(Icons.Outlined.DeleteOutline, contentDescription = stringResource(R.string.detail_delete))
+                }
             }
         }
         val detail = state.detail

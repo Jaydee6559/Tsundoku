@@ -18,7 +18,7 @@ import androidx.room.RoomDatabase
         BookTagEntity::class,
         StatusEventEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class TsundokuDatabase : RoomDatabase() {

@@ -24,6 +24,9 @@ import com.tsundoku.app.R
 import com.tsundoku.app.data.settings.AppPreferences
 import com.tsundoku.app.library.LibraryRepository
 import com.tsundoku.app.library.TrackingRepository
+import com.tsundoku.app.library.TrashRepository
+import com.tsundoku.app.ui.settings.SettingsScreen
+import com.tsundoku.app.ui.trash.TrashScreen
 import com.tsundoku.app.ui.book.BookDetailScreen
 import com.tsundoku.app.ui.library.LibraryScreen
 import com.tsundoku.app.ui.navigation.TopLevelDestination
@@ -31,12 +34,17 @@ import com.tsundoku.app.ui.screens.HomeScreen
 import com.tsundoku.app.ui.screens.PlaceholderScreen
 
 @Composable
-fun TsundokuApp(library: LibraryRepository, tracking: TrackingRepository, preferences: AppPreferences) {
+fun TsundokuApp(
+    library: LibraryRepository,
+    tracking: TrackingRepository,
+    trash: TrashRepository,
+    preferences: AppPreferences,
+) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
-    // The book screen is full height: no bottom bar there.
-    val showBottomBar = currentDestination?.route != BOOK_ROUTE
+    // Full-height screens: no bottom bar there.
+    val showBottomBar = currentDestination?.route !in setOf(BOOK_ROUTE, TRASH_ROUTE)
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -83,6 +91,7 @@ fun TsundokuApp(library: LibraryRepository, tracking: TrackingRepository, prefer
                 LibraryScreen(
                     library = library,
                     tracking = tracking,
+                    trash = trash,
                     preferences = preferences,
                     onBookClick = { id -> navController.navigate("book/$id") },
                 )
@@ -91,17 +100,22 @@ fun TsundokuApp(library: LibraryRepository, tracking: TrackingRepository, prefer
                 BookDetailScreen(
                     bookId = entry.arguments?.getLong("bookId") ?: 0L,
                     tracking = tracking,
+                    trash = trash,
                     onBack = { navController.popBackStack() },
                 )
+            }
+            composable(TRASH_ROUTE) {
+                TrashScreen(trash = trash, onBack = { navController.popBackStack() })
             }
             composable(TopLevelDestination.SERIES.route) {
                 PlaceholderScreen(R.string.tab_series, R.string.placeholder_series)
             }
             composable(TopLevelDestination.SETTINGS.route) {
-                PlaceholderScreen(R.string.tab_settings, R.string.placeholder_settings)
+                SettingsScreen(library = library, trash = trash, onOpenTrash = { navController.navigate(TRASH_ROUTE) })
             }
         }
     }
 }
 
 private const val BOOK_ROUTE = "book/{bookId}"
+private const val TRASH_ROUTE = "trash"

@@ -12,6 +12,11 @@ import com.tsundoku.app.library.LibrarySort
 import com.tsundoku.app.library.LibraryViewMode
 import com.tsundoku.app.library.ScanState
 import com.tsundoku.app.library.TrackingRepository
+import com.tsundoku.app.library.TrashRepository
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -42,8 +47,22 @@ data class LibraryUiState(
 class LibraryViewModel(
     private val library: LibraryRepository,
     private val tracking: TrackingRepository,
+    private val trash: TrashRepository,
     private val preferences: AppPreferences,
 ) : ViewModel() {
+
+    /** One-off messages for the snackbar (e.g. "Moved 3 to Trash · Undo"). */
+    sealed interface Event {
+        data class Trashed(val ids: List<Long>, val count: Int) : Event
+        data class Restored(val count: Int) : Event
+    }
+
+    private val _events = Channel<Event>(Channel.BUFFERED)
+    val events: Flow<Event> = _events.receiveAsFlow()
+
+    /** Books picked with long-press. Empty = not in selection mode. */
+    private val _selected = MutableStateFlow<Set<Long>>(emptySet())
+    val selected: StateFlow<Set<Long>> = _selected.asStateFlow()
 
     private val query = MutableStateFlow("")
     val searchText: StateFlow<String> = query.asStateFlow()
@@ -97,5 +116,49 @@ class LibraryViewModel(
 
     fun scan() {
         library.startScan()
+    }
+
+    // ------------------------------------------------------------------ selection
+
+    fun toggleSelected(id: Long) {
+        _selected.update { if (id in it) it - id else it + id }
+    }
+
+    fun selectAll(ids: List<Long>) {
+        _selected.value = ids.toSet()
+    }
+
+    fun clearSelection() {
+        _selected.value = emptySet()
+    }
+
+    // ------------------------------------------------------------------ actions (one or many books)
+
+    fun moveToTrash(ids: Collection<Long>) {
+        val list = ids.toList()
+        clearSelection()
+        viewModelScope.launch {
+            val moved = trash.moveToTrash(list)
+            if (moved > 0) _events.send(Event.Trashed(list, moved))
+        }
+    }
+
+    fun undoTrash(ids: List<Long>) {
+        viewModelScope.launch {
+            val restored = trash.restore(ids)
+            if (restored > 0) _events.send(Event.Restored(restored))
+        }
+    }
+
+    fun setStatus(ids: Collection<Long>, status: ReadingStatus) {
+        val list = ids.toList()
+        clearSelection()
+        viewModelScope.launch { list.forEach { tracking.setStatus(it, status) } }
+    }
+
+    fun addTag(ids: Collection<Long>, name: String) {
+        val list = ids.toList()
+        clearSelection()
+        viewModelScope.launch { list.forEach { tracking.addTag(it, name) } }
     }
 }

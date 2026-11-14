@@ -8,6 +8,7 @@ import com.tsundoku.app.library.EpubDiscovery
 import com.tsundoku.app.library.LibraryRepository
 import com.tsundoku.app.library.LibraryScanner
 import com.tsundoku.app.library.TrackingRepository
+import com.tsundoku.app.library.TrashRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -48,4 +49,13 @@ class AppContainer(application: Application) {
     }
 
     val tracking: TrackingRepository by lazy { TrackingRepository(database, appScope) }
+
+    val trash: TrashRepository by lazy {
+        TrashRepository(
+            dao = database.bookDao(),
+            storageRoot = { android.os.Environment.getExternalStorageDirectory() },
+            coversDir = File(application.filesDir, "covers"),
+            scope = appScope,
+        )
+    }
 }

@@ -46,5 +46,13 @@ object Migrations {
         }
     }
 
-    val ALL = arrayOf(MIGRATION_1_2)
+    /** v2 -> v3: Trash. Two optional columns on books; nothing else changes. */
+    val MIGRATION_2_3 = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `books` ADD COLUMN `trashedAt` INTEGER")
+            db.execSQL("ALTER TABLE `books` ADD COLUMN `originalPath` TEXT")
+        }
+    }
+
+    val ALL = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
 }

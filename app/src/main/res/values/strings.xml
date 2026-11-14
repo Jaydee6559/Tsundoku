@@ -123,4 +123,43 @@
     <string name="open_missing">This file isn\'t on your phone any more.</string>
     <string name="open_no_reader">No EPUB reader found. Install ReadEra to open books.</string>
     <string name="detail_not_found">This book is no longer in your library.</string>
+    <string name="detail_delete">Move to Trash</string>
+
+    <!-- Trash -->
+    <string name="trash_title">Trash</string>
+    <string name="trash_banner">Books here are deleted for good after 30 days. Restore puts a book back where it was.</string>
+    <string name="trash_summary">%1$d books · %2$s</string>
+    <string name="trash_empty_list">Trash is empty</string>
+    <string name="trash_days_left">%1$d days left</string>
+    <string name="trash_last_day">Deleted at the next cleanup</string>
+    <string name="trash_restore">Restore</string>
+    <string name="trash_delete_forever">Delete forever</string>
+    <string name="trash_empty_action">Empty</string>
+    <string name="trash_confirm_empty_title">Empty Trash?</string>
+    <string name="trash_confirm_empty_body">%1$d books and their reading data will be permanently deleted. This can\'t be undone.</string>
+    <string name="trash_confirm_one_title">Delete forever?</string>
+    <string name="trash_confirm_one_body">\"%1$s\" and its reading data will be permanently deleted. This can\'t be undone.</string>
+    <string name="trash_moved">Moved %1$d to Trash</string>
+    <string name="trash_undo">Undo</string>
+    <string name="trash_restored">Restored %1$d</string>
+
+    <!-- Selection -->
+    <string name="select_count">%1$d selected</string>
+    <string name="select_close">Cancel selection</string>
+    <string name="select_all">Select all</string>
+    <string name="select_set_status">Set status</string>
+    <string name="select_add_tag">Add tag</string>
+    <string name="select_delete">Move to Trash</string>
+    <string name="select_confirm_title">Move %1$d books to Trash?</string>
+    <string name="select_confirm_body">You can restore them from Trash for 30 days.</string>
+    <string name="swipe_status">Set status</string>
+    <string name="swipe_trash">Trash</string>
+    <string name="status_dialog_title">Set status</string>
+
+    <!-- Settings (temporary, full screen in Batch 12) -->
+    <string name="settings_trash">Trash</string>
+    <string name="settings_trash_sub">%1$d books · auto-delete after 30 days</string>
+    <string name="settings_scan">Scan now</string>
+    <string name="settings_scan_sub">Look for new, moved or deleted EPUBs</string>
+    <string name="settings_more_soon">Theme, folders, backups and more arrive in a later update.</string>
 </resources>

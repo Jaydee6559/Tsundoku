@@ -1,7 +1,11 @@
 package com.tsundoku.app.ui.library
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,16 +38,27 @@ import com.tsundoku.app.ui.components.CoverImage
 import com.tsundoku.app.ui.theme.TsundokuTheme
 
 /** One cover in the grid: cover, title, then author or series (design PDF page 3, middle). */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun BookGridItem(book: BookEntity, status: ReadingStatus, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier.clickable(onClick = onClick)) {
-        CoverImage(
-            thumbPath = book.coverThumbPath,
-            title = book.title,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(2f / 3f),
-        )
+fun BookGridItem(
+    book: BookEntity,
+    status: ReadingStatus,
+    selected: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick)) {
+        Box {
+            CoverImage(
+                thumbPath = book.coverThumbPath,
+                title = book.title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(2f / 3f),
+            )
+            if (selected) SelectedMark(Modifier.align(Alignment.TopEnd).padding(5.dp))
+        }
         Spacer(Modifier.height(6.dp))
         Text(
             book.title,
@@ -69,19 +85,31 @@ fun BookGridItem(book: BookEntity, status: ReadingStatus, onClick: () -> Unit, m
 }
 
 /** One row in the list view. */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun BookListRow(book: BookEntity, status: ReadingStatus, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun BookListRow(
+    book: BookEntity,
+    status: ReadingStatus,
+    selected: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(
         modifier
-            .clickable(onClick = onClick)
-            .padding(vertical = 9.dp),
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .background(if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.background)
+            .padding(vertical = 9.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        CoverImage(
-            thumbPath = book.coverThumbPath,
-            title = book.title,
-            modifier = Modifier.size(width = 42.dp, height = 62.dp),
-        )
+        Box {
+            CoverImage(
+                thumbPath = book.coverThumbPath,
+                title = book.title,
+                modifier = Modifier.size(width = 42.dp, height = 62.dp),
+            )
+            if (selected) SelectedMark(Modifier.align(Alignment.Center))
+        }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
@@ -106,6 +134,20 @@ fun BookListRow(book: BookEntity, status: ReadingStatus, onClick: () -> Unit, mo
         Spacer(Modifier.width(8.dp))
         LocationChip(book.folder)
     }
+}
+
+/** Check mark on a selected book. */
+@Composable
+private fun SelectedMark(modifier: Modifier = Modifier) {
+    Icon(
+        Icons.Outlined.CheckCircle,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onPrimary,
+        modifier = modifier
+            .size(24.dp)
+            .background(MaterialTheme.colorScheme.primary, CircleShape)
+            .padding(2.dp),
+    )
 }
 
 @Composable
