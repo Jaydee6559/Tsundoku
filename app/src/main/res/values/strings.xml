@@ -109,6 +109,10 @@
     <string name="filter_series">In a series %1$d</string>
     <string name="filter_standalone">Standalone %1$d</string>
     <string name="filter_broken">Broken %1$d</string>
+    <string name="location_all">All locations</string>
+    <string name="location_menu">Choose location</string>
+    <string name="location_item">%1$s · %2$d</string>
+    <string name="location_readera_hint">Copies ReadEra made when you opened books from Tsundoku</string>
     <string name="filter_reading">Reading %1$d</string>
     <string name="filter_plan">Plan %1$d</string>
     <string name="filter_completed">Done %1$d</string>

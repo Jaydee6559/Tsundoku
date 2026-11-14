@@ -34,6 +34,35 @@ object LibraryQuery {
             .toList()
     }
 
+    // ------------------------------------------------------------------ locations
+
+    /** Label for books that ReadEra copied into its own folder. */
+    const val READERA_LOCATION = "ReadEra"
+
+    /** Label for books lying directly in the storage root. */
+    const val ROOT_LOCATION = "Storage"
+
+    /**
+     * Where a book lives, as shown on its chip and in the location filter:
+     * any folder named like ReadEra (its copies) -> "ReadEra", otherwise the top-level folder
+     * ("Download", "Telegram", ...).
+     */
+    fun locationOf(folder: String): String {
+        val parts = folder.split('/').filter { it.isNotEmpty() }
+        if (parts.any { it.contains("readera", ignoreCase = true) }) return READERA_LOCATION
+        return parts.firstOrNull() ?: ROOT_LOCATION
+    }
+
+    /** Every location with its book count, biggest first. */
+    fun locations(books: List<BookEntity>): List<Pair<String, Int>> =
+        books.groupingBy { locationOf(it.folder) }.eachCount()
+            .toList()
+            .sortedWith(compareByDescending<Pair<String, Int>> { it.second }.thenBy { it.first.lowercase() })
+
+    /** Books in one location (null = everywhere). */
+    fun inLocation(books: List<BookEntity>, location: String?): List<BookEntity> =
+        if (location == null) books else books.filter { locationOf(it.folder) == location }
+
     /** How many books each filter chip would show (ignores the search text). */
     fun counts(
         books: List<BookEntity>,

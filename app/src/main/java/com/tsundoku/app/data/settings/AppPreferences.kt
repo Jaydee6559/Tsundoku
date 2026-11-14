@@ -24,6 +24,7 @@ class AppPreferences(private val context: Context) {
         val LIBRARY_VIEW = stringPreferencesKey("library_view")
         val LIBRARY_SORT = stringPreferencesKey("library_sort")
         val LIBRARY_FILTER = stringPreferencesKey("library_filter")
+        val LIBRARY_LOCATION = stringPreferencesKey("library_location")
     }
 
     /** True once the user has finished the first-launch flow. */
@@ -38,6 +39,15 @@ class AppPreferences(private val context: Context) {
     val libraryView: Flow<LibraryViewMode> = enumFlow(Keys.LIBRARY_VIEW, LibraryViewMode.GRID)
     val librarySort: Flow<LibrarySort> = enumFlow(Keys.LIBRARY_SORT, LibrarySort.RECENT)
     val libraryFilter: Flow<LibraryFilter> = enumFlow(Keys.LIBRARY_FILTER, LibraryFilter.ALL)
+
+    /** Chosen location ("Download", "ReadEra"...), or null for everywhere. */
+    val libraryLocation: Flow<String?> = context.dataStore.data
+        .map { prefs -> prefs[Keys.LIBRARY_LOCATION]?.takeIf { it.isNotEmpty() } }
+        .distinctUntilChanged()
+
+    suspend fun setLibraryLocation(value: String?) {
+        context.dataStore.edit { it[Keys.LIBRARY_LOCATION] = value.orEmpty() }
+    }
 
     suspend fun setLibraryView(value: LibraryViewMode) = setEnum(Keys.LIBRARY_VIEW, value)
     suspend fun setLibrarySort(value: LibrarySort) = setEnum(Keys.LIBRARY_SORT, value)

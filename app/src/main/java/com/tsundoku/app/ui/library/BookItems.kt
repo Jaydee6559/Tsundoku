@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.tsundoku.app.R
 import com.tsundoku.app.data.db.BookEntity
 import com.tsundoku.app.data.db.ReadingStatus
+import com.tsundoku.app.library.LibraryQuery
 import com.tsundoku.app.ui.components.StatusDotLabel
 import com.tsundoku.app.ui.components.CoverImage
 import com.tsundoku.app.ui.theme.TsundokuTheme
@@ -186,7 +187,7 @@ private fun LocationChip(folder: String) {
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Text(
-            folder.substringBefore('/').ifEmpty { "Storage" },
+            LibraryQuery.locationOf(folder),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,

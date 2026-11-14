@@ -165,6 +165,15 @@ fun LibraryScreen(
                 )
             }
 
+            // Location picker: only worth showing when books live in more than one place.
+            if (state.locations.size > 1 || state.location != null) {
+                LocationMenu(
+                    current = state.location,
+                    locations = state.locations,
+                    onPick = vm::setLocation,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 6.dp),
+                )
+            }
             FilterRow(filter = state.filter, counts = state.counts, onFilter = vm::setFilter)
             SummaryRow(state = state, scan = scan)
 

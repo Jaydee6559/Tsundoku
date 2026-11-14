@@ -40,6 +40,10 @@ data class LibraryUiState(
     val query: String = "",
     /** bookId -> status; books not in the map are "Plan to read". */
     val statuses: Map<Long, ReadingStatus> = emptyMap(),
+    /** Chosen location, or null for everywhere. */
+    val location: String? = null,
+    /** All locations with book counts, for the location menu. */
+    val locations: List<Pair<String, Int>> = emptyList(),
 ) {
     fun statusOf(bookId: Long): ReadingStatus = statuses[bookId] ?: ReadingStatus.PLAN
 }
@@ -73,21 +77,42 @@ class LibraryViewModel(
         books to statuses
     }
 
-    val uiState: StateFlow<LibraryUiState> = combine(
-        booksWithStatus,
-        query,
+    private data class ViewPrefs(
+        val sort: LibrarySort,
+        val filter: LibraryFilter,
+        val view: LibraryViewMode,
+        val location: String?,
+    )
+
+    private val viewPrefs = combine(
         preferences.librarySort,
         preferences.libraryFilter,
         preferences.libraryView,
-    ) { (books, statuses), q, sort, filter, view ->
+        preferences.libraryLocation,
+    ) { sort, filter, view, location -> ViewPrefs(sort, filter, view, location) }
+
+    val uiState: StateFlow<LibraryUiState> = combine(
+        booksWithStatus,
+        query,
+        viewPrefs,
+    ) { (books, statuses), q, prefs ->
         val statusOf: (Long) -> ReadingStatus = { statuses[it] ?: ReadingStatus.PLAN }
+        val locations = LibraryQuery.locations(books)
+        // A remembered location that no longer has books falls back to everywhere.
+        val location = prefs.location?.takeIf { loc -> locations.any { it.first == loc } }
+        val here = LibraryQuery.inLocation(books, location)
+        val sort = prefs.sort
+        val filter = prefs.filter
+        val view = prefs.view
         LibraryUiState(
             loaded = true,
-            books = LibraryQuery.apply(books, q, sort, filter, statusOf),
-            totalCount = books.size,
-            totalBytes = books.sumOf { it.sizeBytes },
-            counts = LibraryQuery.counts(books, statusOf),
+            books = LibraryQuery.apply(here, q, sort, filter, statusOf),
+            totalCount = here.size,
+            totalBytes = here.sumOf { it.sizeBytes },
+            counts = LibraryQuery.counts(here, statusOf),
             statuses = statuses,
+            location = location,
+            locations = locations,
             sort = sort,
             filter = filter,
             view = view,
@@ -107,6 +132,10 @@ class LibraryViewModel(
 
     fun setFilter(filter: LibraryFilter) {
         viewModelScope.launch { preferences.setLibraryFilter(filter) }
+    }
+
+    fun setLocation(location: String?) {
+        viewModelScope.launch { preferences.setLibraryLocation(location) }
     }
 
     fun toggleView(current: LibraryViewMode) {
