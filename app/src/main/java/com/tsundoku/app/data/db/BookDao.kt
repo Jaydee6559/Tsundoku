@@ -35,6 +35,9 @@ abstract class BookDao {
     @Query("SELECT path FROM books WHERE substr(path, 1, length(:prefix)) = :prefix")
     abstract suspend fun pathsStartingWith(prefix: String): List<String>
 
+    @Query("SELECT id FROM books WHERE path = :path")
+    abstract suspend fun idForPath(path: String): Long?
+
     @Query("DELETE FROM books WHERE id IN (:ids)")
     abstract suspend fun deleteByIds(ids: List<Long>)
 

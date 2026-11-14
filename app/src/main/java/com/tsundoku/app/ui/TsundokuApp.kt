@@ -25,6 +25,9 @@ import com.tsundoku.app.library.LibraryRepository
 import com.tsundoku.app.library.TrackingRepository
 import com.tsundoku.app.library.TrashRepository
 import com.tsundoku.app.library.SeriesRepository
+import com.tsundoku.app.library.UpNextRepository
+import com.tsundoku.app.ui.home.HomeScreen
+import com.tsundoku.app.ui.home.UpNextScreen
 import com.tsundoku.app.ui.series.SeriesDetailScreen
 import com.tsundoku.app.ui.series.SeriesListScreen
 import android.net.Uri
@@ -33,7 +36,6 @@ import com.tsundoku.app.ui.trash.TrashScreen
 import com.tsundoku.app.ui.book.BookDetailScreen
 import com.tsundoku.app.ui.library.LibraryScreen
 import com.tsundoku.app.ui.navigation.TopLevelDestination
-import com.tsundoku.app.ui.screens.HomeScreen
 
 @Composable
 fun TsundokuApp(
@@ -41,13 +43,14 @@ fun TsundokuApp(
     tracking: TrackingRepository,
     trash: TrashRepository,
     series: SeriesRepository,
+    upNext: UpNextRepository,
     preferences: AppPreferences,
 ) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     // Full-height screens: no bottom bar there.
-    val showBottomBar = currentDestination?.route !in setOf(BOOK_ROUTE, TRASH_ROUTE, SERIES_ROUTE)
+    val showBottomBar = currentDestination?.route !in setOf(BOOK_ROUTE, TRASH_ROUTE, SERIES_ROUTE, UP_NEXT_ROUTE)
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -89,12 +92,35 @@ fun TsundokuApp(
             startDestination = TopLevelDestination.HOME.route,
             modifier = Modifier.padding(innerPadding),
         ) {
-            composable(TopLevelDestination.HOME.route) { HomeScreen() }
+            composable(TopLevelDestination.HOME.route) {
+                HomeScreen(
+                    library = library,
+                    tracking = tracking,
+                    upNext = upNext,
+                    onOpenBook = { id -> navController.navigate("book/$id") },
+                    onEditUpNext = { navController.navigate(UP_NEXT_ROUTE) },
+                    onOpenLibrary = {
+                        navController.navigate(TopLevelDestination.LIBRARY.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                )
+            }
+            composable(UP_NEXT_ROUTE) {
+                UpNextScreen(
+                    upNext = upNext,
+                    onBack = { navController.popBackStack() },
+                    onOpenBook = { id -> navController.navigate("book/$id") },
+                )
+            }
             composable(TopLevelDestination.LIBRARY.route) {
                 LibraryScreen(
                     library = library,
                     tracking = tracking,
                     trash = trash,
+                    upNext = upNext,
                     preferences = preferences,
                     onBookClick = { id -> navController.navigate("book/$id") },
                 )
@@ -104,6 +130,7 @@ fun TsundokuApp(
                     bookId = entry.arguments?.getLong("bookId") ?: 0L,
                     tracking = tracking,
                     trash = trash,
+                    upNext = upNext,
                     onBack = { navController.popBackStack() },
                 )
             }
@@ -135,3 +162,4 @@ fun TsundokuApp(
 private const val BOOK_ROUTE = "book/{bookId}"
 private const val TRASH_ROUTE = "trash"
 private const val SERIES_ROUTE = "series/{key}"
+private const val UP_NEXT_ROUTE = "up-next"

@@ -24,6 +24,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.automirrored.outlined.PlaylistAdd
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
@@ -41,6 +42,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -51,6 +53,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -68,6 +71,8 @@ import com.tsundoku.app.library.BookDetail
 import com.tsundoku.app.library.TrackingRepository
 import com.tsundoku.app.library.TrackingRules
 import com.tsundoku.app.library.TrashRepository
+import com.tsundoku.app.library.UpNextRepository
+import kotlinx.coroutines.launch
 import com.tsundoku.app.reader.ReaderLauncher
 import com.tsundoku.app.ui.components.CoverImage
 import com.tsundoku.app.ui.components.labelRes
@@ -79,7 +84,15 @@ import java.util.Date
 
 /** One book: Open in ReadEra, status, progress, rating, tags, notes (design PDF page 4). */
 @Composable
-fun BookDetailScreen(bookId: Long, tracking: TrackingRepository, trash: TrashRepository, onBack: () -> Unit) {
+fun BookDetailScreen(
+    bookId: Long,
+    tracking: TrackingRepository,
+    trash: TrashRepository,
+    upNext: UpNextRepository,
+    onBack: () -> Unit,
+) {
+    val queued by upNext.ids.collectAsStateWithLifecycle(initialValue = emptySet())
+    val upNextScope = rememberCoroutineScope()
     val vm: BookDetailViewModel = viewModel(key = "book-$bookId") { BookDetailViewModel(bookId, tracking) }
     val state by vm.state.collectAsStateWithLifecycle()
 
@@ -111,14 +124,26 @@ fun BookDetailScreen(bookId: Long, tracking: TrackingRepository, trash: TrashRep
             detail == null -> Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
                 Text(stringResource(R.string.detail_not_found), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            else -> DetailContent(detail, vm)
+            else -> DetailContent(
+                d = detail,
+                vm = vm,
+                inUpNext = bookId in queued,
+                onToggleUpNext = {
+                    upNextScope.launch { if (bookId in queued) upNext.remove(bookId) else upNext.add(listOf(bookId)) }
+                },
+            )
         }
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DetailContent(d: BookDetail, vm: BookDetailViewModel) {
+private fun DetailContent(
+    d: BookDetail,
+    vm: BookDetailViewModel,
+    inUpNext: Boolean,
+    onToggleUpNext: () -> Unit,
+) {
     val context = LocalContext.current
     val book = d.book
     val t = d.tracking
@@ -178,6 +203,20 @@ private fun DetailContent(d: BookDetail, vm: BookDetailViewModel) {
             Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
             Text(stringResource(R.string.detail_open_readera), style = MaterialTheme.typography.labelLarge)
+        }
+        Spacer(Modifier.height(8.dp))
+        OutlinedButton(
+            onClick = onToggleUpNext,
+            shape = MaterialTheme.shapes.large,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Icon(
+                if (inUpNext) Icons.Outlined.Check else Icons.AutoMirrored.Outlined.PlaylistAdd,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(if (inUpNext) R.string.upnext_added else R.string.upnext_add))
         }
 
         // ---- status

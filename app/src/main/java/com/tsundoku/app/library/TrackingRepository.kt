@@ -43,6 +43,9 @@ class TrackingRepository(
     fun observeStatuses(): Flow<Map<Long, ReadingStatus>> =
         dao.observeAll().map { list -> list.associate { it.bookId to it.status } }
 
+    /** Every tracking row (for Home: continue reading, counts). */
+    fun observeAllTracking(): Flow<List<TrackingEntity>> = dao.observeAll()
+
     suspend fun setStatus(bookId: Long, status: ReadingStatus) =
         update(bookId) { t, total, now -> TrackingRules.withStatus(t, status, total, now) }
 

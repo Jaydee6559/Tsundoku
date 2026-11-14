@@ -28,6 +28,7 @@ class MainActivity : ComponentActivity() {
                     tracking = container.tracking,
                     trash = container.trash,
                     series = container.series,
+                    upNext = container.upNext,
                     watcher = container.watcher,
                 )
 

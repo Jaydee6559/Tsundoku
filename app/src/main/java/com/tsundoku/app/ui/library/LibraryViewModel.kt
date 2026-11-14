@@ -13,6 +13,7 @@ import com.tsundoku.app.library.LibraryViewMode
 import com.tsundoku.app.library.ScanState
 import com.tsundoku.app.library.TrackingRepository
 import com.tsundoku.app.library.TrashRepository
+import com.tsundoku.app.library.UpNextRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -52,6 +53,7 @@ class LibraryViewModel(
     private val library: LibraryRepository,
     private val tracking: TrackingRepository,
     private val trash: TrashRepository,
+    private val upNext: UpNextRepository,
     private val preferences: AppPreferences,
 ) : ViewModel() {
 
@@ -59,6 +61,7 @@ class LibraryViewModel(
     sealed interface Event {
         data class Trashed(val ids: List<Long>, val count: Int) : Event
         data class Restored(val count: Int) : Event
+        data class AddedToUpNext(val count: Int) : Event
     }
 
     private val _events = Channel<Event>(Channel.BUFFERED)
@@ -183,6 +186,15 @@ class LibraryViewModel(
         val list = ids.toList()
         clearSelection()
         viewModelScope.launch { list.forEach { tracking.setStatus(it, status) } }
+    }
+
+    fun addToUpNext(ids: Collection<Long>) {
+        val list = ids.toList()
+        clearSelection()
+        viewModelScope.launch {
+            upNext.add(list)
+            _events.send(Event.AddedToUpNext(list.size))
+        }
     }
 
     fun addTag(ids: Collection<Long>, name: String) {

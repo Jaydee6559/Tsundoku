@@ -75,6 +75,7 @@ import com.tsundoku.app.library.LibraryViewMode
 import com.tsundoku.app.library.ScanState
 import com.tsundoku.app.library.TrackingRepository
 import com.tsundoku.app.library.TrashRepository
+import com.tsundoku.app.library.UpNextRepository
 import com.tsundoku.app.ui.trash.ConfirmDialog
 import com.tsundoku.app.library.isRunning
 
@@ -84,10 +85,11 @@ fun LibraryScreen(
     library: LibraryRepository,
     tracking: TrackingRepository,
     trash: TrashRepository,
+    upNext: UpNextRepository,
     preferences: AppPreferences,
     onBookClick: (Long) -> Unit,
 ) {
-    val vm: LibraryViewModel = viewModel { LibraryViewModel(library, tracking, trash, preferences) }
+    val vm: LibraryViewModel = viewModel { LibraryViewModel(library, tracking, trash, upNext, preferences) }
     val state by vm.uiState.collectAsStateWithLifecycle()
     val scan by vm.scanState.collectAsStateWithLifecycle()
     val searchText by vm.searchText.collectAsStateWithLifecycle()
@@ -115,6 +117,8 @@ fun LibraryScreen(
                 }
                 is LibraryViewModel.Event.Restored ->
                     snackbar.showSnackbar(context.getString(R.string.trash_restored, event.count))
+                is LibraryViewModel.Event.AddedToUpNext ->
+                    snackbar.showSnackbar(context.getString(R.string.upnext_added_many, event.count))
             }
         }
     }
@@ -144,6 +148,7 @@ fun LibraryScreen(
                     onSelectAll = { vm.selectAll(state.books.map { it.id }) },
                     onStatus = { statusFor = selected.toList() },
                     onTag = { tagFor = selected.toList() },
+                    onUpNext = { vm.addToUpNext(selected) },
                     onTrash = { trashAsk(selected.toList()) },
                 )
                 searching -> SearchBar(

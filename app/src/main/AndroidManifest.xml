@@ -40,6 +40,30 @@
             </intent-filter>
         </activity>
 
+        <!--
+            "Share" / "Open with" target for EPUB files only. It just shows the book; nothing is
+            saved until you tap "Add to library" (see share/ShareImporter.kt).
+        -->
+        <activity
+            android:name=".share.ShareActivity"
+            android:exported="true"
+            android:label="@string/share_label"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Tsundoku">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/epub+zip" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:mimeType="application/epub+zip" />
+            </intent-filter>
+        </activity>
+
         <!-- Lets "Open in ReadEra" pass one book to the reader (read-only, not exported). -->
         <provider
             android:name="androidx.core.content.FileProvider"

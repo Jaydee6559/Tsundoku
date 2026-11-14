@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.LibraryBooks
+import androidx.compose.material.icons.automirrored.outlined.PlaylistAdd
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.LocalOffer
@@ -54,6 +55,7 @@ fun SelectionBar(
     onSelectAll: () -> Unit,
     onStatus: () -> Unit,
     onTag: () -> Unit,
+    onUpNext: () -> Unit,
     onTrash: () -> Unit,
 ) {
     Row(
@@ -77,6 +79,9 @@ fun SelectionBar(
             Icon(Icons.AutoMirrored.Outlined.LibraryBooks, stringResource(R.string.select_set_status), tint = ink)
         }
         IconButton(onClick = onTag) { Icon(Icons.Outlined.LocalOffer, stringResource(R.string.select_add_tag), tint = ink) }
+        IconButton(onClick = onUpNext) {
+            Icon(Icons.AutoMirrored.Outlined.PlaylistAdd, stringResource(R.string.select_up_next), tint = ink)
+        }
         IconButton(onClick = onTrash) { Icon(Icons.Outlined.DeleteOutline, stringResource(R.string.select_delete), tint = ink) }
     }
 }
