@@ -24,6 +24,7 @@ internal class OpfHandler : DefaultHandler() {
     var version: String? = null
     val titles = mutableListOf<String>()
     val creators = mutableListOf<String>()
+    val subjects = mutableListOf<String>()
     var language: String? = null
     var publisher: String? = null
     var identifier: String? = null
@@ -108,6 +109,7 @@ internal class OpfHandler : DefaultHandler() {
         when (target) {
             "title" -> titles += value
             "creator" -> creators += value
+            "subject" -> subjects += value
             "language" -> if (language == null) language = value
             "publisher" -> if (publisher == null) publisher = value
             "identifier" -> if (identifier == null) identifier = value

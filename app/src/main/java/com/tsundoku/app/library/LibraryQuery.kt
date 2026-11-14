@@ -82,10 +82,10 @@ object LibraryQuery {
         LibraryFilter.BROKEN -> book.parseError != null
     }
 
-    /** Every word typed must appear somewhere in title, author, series or file name. */
+    /** Every word typed must appear somewhere in title, author, series, EPUB tags or file name. */
     private fun matchesSearch(book: BookEntity, tokens: List<String>): Boolean {
         val haystack = normalize(
-            listOfNotNull(book.title, book.authors, book.seriesName, book.fileName).joinToString(" "),
+            listOfNotNull(book.title, book.authors, book.seriesName, book.subjects, book.fileName).joinToString(" "),
         )
         return tokens.all { it in haystack }
     }

@@ -69,6 +69,9 @@ fun DisplayOptionsDialog(
                 Toggle(stringResource(R.string.display_location), null, display.showLocation) {
                     onDisplay(display.copy(showLocation = it))
                 }
+                Toggle(stringResource(R.string.display_epub_tags), stringResource(R.string.display_epub_tags_sub), display.showEpubTags) {
+                    onDisplay(display.copy(showEpubTags = it))
+                }
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.display_done)) } },

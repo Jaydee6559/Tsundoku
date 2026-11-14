@@ -43,6 +43,14 @@ class EpubParserTest {
         assertEquals("OEBPS/images/front.jpg", m.coverPath)
         assertEquals(3, m.spineCount)
         assertEquals("2.0", m.epubVersion)
+        assertEquals(listOf("Fantasy", "Romance", "Slow Burn"), m.subjects) // split, trimmed, no duplicates
+    }
+
+    @Test
+    fun `subject cleaning caps and splits`() {
+        assertEquals(listOf("A", "B", "C"), EpubParser.cleanSubjects(listOf("A; B / C", "a", "")))
+        assertEquals(20, EpubParser.cleanSubjects((1..50).map { "tag$it" }).size)
+        assertEquals(40, EpubParser.cleanSubjects(listOf("x".repeat(100))).single().length)
     }
 
     @Test

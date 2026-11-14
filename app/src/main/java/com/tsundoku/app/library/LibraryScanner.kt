@@ -45,7 +45,13 @@ class LibraryScanner(
             .map { (name, count) -> FolderCount(name, count) }
             .sortedByDescending { it.count }
 
-        val plan = ScanPlanner.plan(dao.scanRows(), found) { safeFingerprint(it) }
+        val basePlan = ScanPlanner.plan(dao.scanRows(), found) { safeFingerprint(it) }
+        // Books scanned by an older version are read once more to pick up newer details (EPUB tags).
+        val alreadyQueued = basePlan.changed.map { it.first }.toSet() + basePlan.moved.map { it.first }
+        val refresh = dao.rowsNeedingMetadata()
+            .filter { it.id !in alreadyQueued && File(it.path).isFile }
+            .map { it.id to FoundFile(it.path, it.sizeBytes, it.lastModified) }
+        val plan = basePlan.copy(changed = basePlan.changed + refresh)
         applyPlan(plan, root, found.size, folders, started, onProgress)
     }
 
@@ -178,6 +184,7 @@ class LibraryScanner(
             spineCount = 0,
             coverThumbPath = null,
             parseError = "Couldn't read: ${t.javaClass.simpleName}",
+            subjects = "",
             isMissing = false,
             addedAt = addedAt,
             updatedAt = System.currentTimeMillis(),
@@ -219,6 +226,7 @@ class LibraryScanner(
             spineCount = meta?.spineCount ?: 0,
             coverThumbPath = thumb,
             parseError = (result as? EpubResult.Failure)?.reason,
+            subjects = meta?.subjects?.joinToString("\n").orEmpty(),
             isMissing = false,
             addedAt = addedAt,
             updatedAt = System.currentTimeMillis(),

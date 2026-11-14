@@ -18,6 +18,8 @@ data class EpubMetadata(
     val spineCount: Int,
     /** "2.0", "3.0", ... as declared in the OPF. */
     val epubVersion: String?,
+    /** Tags / genres from the EPUB (dc:subject), cleaned and de-duplicated. */
+    val subjects: List<String> = emptyList(),
 )
 
 /** Result of parsing: either metadata, or a short reason why the file couldn't be read. */

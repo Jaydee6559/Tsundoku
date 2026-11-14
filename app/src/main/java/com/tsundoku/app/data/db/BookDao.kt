@@ -77,6 +77,13 @@ abstract class BookDao {
     @Query("SELECT DISTINCT folder FROM books WHERE trashedAt IS NULL AND isMissing = 0")
     abstract suspend fun bookFolders(): List<String>
 
+    /** Books on the phone whose EPUB tags haven't been read yet (scanned before DB v6). */
+    @Query(
+        "SELECT id, path, sizeBytes, lastModified, fingerprint, isMissing FROM books " +
+            "WHERE subjects IS NULL AND trashedAt IS NULL AND isMissing = 0",
+    )
+    abstract suspend fun rowsNeedingMetadata(): List<BookScanRow>
+
     /** Trashed books are left out: their files live in a hidden folder the scan skips on purpose. */
     @Query("SELECT id, path, sizeBytes, lastModified, fingerprint, isMissing FROM books WHERE trashedAt IS NULL")
     abstract suspend fun scanRows(): List<BookScanRow>

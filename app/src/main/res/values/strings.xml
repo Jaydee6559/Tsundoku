@@ -132,7 +132,7 @@
     <string name="library_vol">Vol %1$s</string>
     <string name="library_last_scan">Added %1$d · updated %2$d · moved %3$d · missing %4$d</string>
     <string name="library_search">Search</string>
-    <string name="library_search_hint">Title, author or series</string>
+    <string name="library_search_hint">Title, author, series or tag</string>
     <string name="library_close_search">Close search</string>
     <string name="library_clear_search">Clear</string>
     <string name="library_sort">Sort</string>
@@ -150,6 +150,8 @@
     <string name="display_subtitle">Show author / series</string>
     <string name="display_status">Show reading status</string>
     <string name="display_location">Show folder (list view)</string>
+    <string name="display_epub_tags">Show EPUB tags</string>
+    <string name="display_epub_tags_sub">Genres written in the book (list view and large tiles)</string>
     <string name="display_done">Done</string>
     <string name="library_view_list">Show as list</string>
     <string name="library_no_results_title">No matches</string>
@@ -193,7 +195,9 @@
     <string name="detail_next_chapter">Next chapter</string>
     <string name="detail_rating">Rating</string>
     <string name="detail_star">%1$d stars</string>
-    <string name="detail_tags">Tags</string>
+    <string name="detail_tags">Your tags</string>
+    <string name="detail_epub_tags">Tags from the EPUB</string>
+    <string name="detail_epub_tags_hint">Tap a tag to add it to your own tags.</string>
     <string name="detail_add_tag">+ Add</string>
     <string name="detail_remove_tag">Remove tag %1$s</string>
     <string name="detail_notes">Notes</string>

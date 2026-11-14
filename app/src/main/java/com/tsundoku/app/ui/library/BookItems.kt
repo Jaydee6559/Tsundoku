@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import com.tsundoku.app.R
 import com.tsundoku.app.data.db.BookEntity
 import com.tsundoku.app.data.db.ReadingStatus
+import com.tsundoku.app.data.db.subjectList
 import com.tsundoku.app.data.settings.LibraryDisplay
 import com.tsundoku.app.data.settings.TileSize
 import com.tsundoku.app.library.LibraryQuery
@@ -92,6 +93,7 @@ fun BookGridItem(
         } else if (display.showStatus) {
             StatusDotLabel(status, Modifier.padding(top = 2.dp))
         }
+        if (display.showEpubTags && display.tileSize == TileSize.LARGE) EpubTagsLine(book, max = 2)
     }
 }
 
@@ -147,6 +149,7 @@ fun BookListRow(
             } else if (display.showStatus) {
                 StatusDotLabel(status, Modifier.padding(top = 3.dp))
             }
+            if (display.showEpubTags) EpubTagsLine(book, max = 3)
         }
         if (display.showLocation) {
             Spacer(Modifier.width(8.dp))
@@ -174,6 +177,34 @@ private fun listCover(size: TileSize): Pair<Dp, Dp> = when (size) {
     TileSize.SMALL -> 36.dp to 54.dp
     TileSize.MEDIUM -> 50.dp to 75.dp
     TileSize.LARGE -> 66.dp to 99.dp
+}
+
+/** A few of the EPUB's own tags as small pills, "+N" for the rest. */
+@Composable
+private fun EpubTagsLine(book: BookEntity, max: Int) {
+    val tags = book.subjectList
+    if (tags.isEmpty()) return
+    Row(
+        Modifier.padding(top = 4.dp),
+        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp),
+    ) {
+        tags.take(max).forEach { TagPill(it) }
+        if (tags.size > max) TagPill("+${tags.size - max}")
+    }
+}
+
+@Composable
+private fun TagPill(text: String) {
+    Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceVariant) {
+        Text(
+            text,
+            fontSize = 10.5.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = 7.dp, vertical = 1.dp),
+        )
+    }
 }
 
 /** Check mark on a selected book. */

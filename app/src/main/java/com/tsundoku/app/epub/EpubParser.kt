@@ -73,8 +73,27 @@ object EpubParser {
             coverPath = findCover(opf)?.let { href -> resolve(opfDir, href) }?.takeIf { zip.findEntry(it) != null },
             spineCount = opf.spineCount,
             epubVersion = opf.version,
+            subjects = cleanSubjects(opf.subjects),
         )
     }
+
+    /**
+     * EPUB tags arrive messy: "Fantasy, Romance" in one entry, duplicates, odd spacing.
+     * Splits on , ; and /, trims, drops duplicates (ignoring case), caps count and length.
+     */
+    internal fun cleanSubjects(raw: List<String>): List<String> {
+        val seen = HashSet<String>()
+        return raw.asSequence()
+            .flatMap { it.split(SUBJECT_SEPARATORS).asSequence() }
+            .map { it.cleanText().take(MAX_SUBJECT_LENGTH) }
+            .filter { it.isNotEmpty() && seen.add(it.lowercase()) }
+            .take(MAX_SUBJECTS)
+            .toList()
+    }
+
+    private val SUBJECT_SEPARATORS = Regex("[,;/]")
+    private const val MAX_SUBJECTS = 20
+    private const val MAX_SUBJECT_LENGTH = 40
 
     private fun findSeries(opf: OpfHandler): Pair<String?, Double?> {
         opf.calibreSeries?.cleanText()?.takeIf { it.isNotEmpty() }?.let { name ->

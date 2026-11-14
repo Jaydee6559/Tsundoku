@@ -34,6 +34,8 @@ data class LibraryDisplay(
     val showStatus: Boolean = true,
     /** Folder chip (Download, ReadEra...) in list view. */
     val showLocation: Boolean = true,
+    /** The EPUB's own tags (genres) under each book. */
+    val showEpubTags: Boolean = true,
 )
 
 /** Default folder for books added with "Share → Tsundoku". */
@@ -56,6 +58,7 @@ class AppPreferences(private val context: Context) {
         val SHOW_SUBTITLE = booleanPreferencesKey("show_subtitle")
         val SHOW_STATUS = booleanPreferencesKey("show_status")
         val SHOW_LOCATION = booleanPreferencesKey("show_location")
+        val SHOW_EPUB_TAGS = booleanPreferencesKey("show_epub_tags")
         val AMOLED = booleanPreferencesKey("amoled")
         val EXCLUDED = stringSetPreferencesKey("excluded_folders")
         val SHARE_FOLDER = stringPreferencesKey("share_folder")
@@ -94,6 +97,7 @@ class AppPreferences(private val context: Context) {
             showSubtitle = p[Keys.SHOW_SUBTITLE] ?: true,
             showStatus = p[Keys.SHOW_STATUS] ?: true,
             showLocation = p[Keys.SHOW_LOCATION] ?: true,
+            showEpubTags = p[Keys.SHOW_EPUB_TAGS] ?: true,
         )
     }.distinctUntilChanged()
 
@@ -104,6 +108,7 @@ class AppPreferences(private val context: Context) {
             it[Keys.SHOW_SUBTITLE] = d.showSubtitle
             it[Keys.SHOW_STATUS] = d.showStatus
             it[Keys.SHOW_LOCATION] = d.showLocation
+            it[Keys.SHOW_EPUB_TAGS] = d.showEpubTags
         }
     }
 

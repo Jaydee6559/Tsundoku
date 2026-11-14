@@ -57,7 +57,18 @@ data class BookEntity(
     val trashedAt: Long? = null,
     /** Where the file lived before it was trashed; used by Restore. */
     val originalPath: String? = null,
+
+    // ---- DB v6
+    /**
+     * Tags from the EPUB itself (dc:subject), one per line. "" = the EPUB has none;
+     * null = not read yet (books scanned before v6 are re-read once to fill this in).
+     */
+    val subjects: String? = null,
 )
+
+/** The EPUB's own tags as a list. */
+val BookEntity.subjectList: List<String>
+    get() = subjects?.split('\n')?.filter { it.isNotBlank() }.orEmpty()
 
 /** The few columns the scanner needs to compare the database with what's on disk. */
 data class BookScanRow(

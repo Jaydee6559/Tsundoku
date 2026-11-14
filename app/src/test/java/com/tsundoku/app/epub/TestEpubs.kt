@@ -59,6 +59,9 @@ object TestEpubs {
             <dc:creator opf:role="aut">Mei Arakawa</dc:creator>
             <dc:language>en</dc:language>
             <dc:publisher>Test Press</dc:publisher>
+            <dc:subject>Fantasy, Romance</dc:subject>
+            <dc:subject>fantasy</dc:subject>
+            <dc:subject>  Slow   Burn  </dc:subject>
             <dc:identifier id="uid">urn:uuid:1234</dc:identifier>
             <meta name="calibre:series" content="Lantern Saga"/>
             <meta name="calibre:series_index" content="2.0"/>

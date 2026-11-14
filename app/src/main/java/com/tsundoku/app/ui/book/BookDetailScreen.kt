@@ -34,6 +34,7 @@ import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -67,6 +68,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tsundoku.app.R
 import com.tsundoku.app.data.db.ReadingStatus
+import com.tsundoku.app.data.db.subjectList
 import com.tsundoku.app.library.BookDetail
 import com.tsundoku.app.library.TrackingRepository
 import com.tsundoku.app.library.TrackingRules
@@ -294,7 +296,35 @@ private fun DetailContent(
             )
         }
 
-        // ---- tags
+        // ---- tags written inside the EPUB (read-only; tap to copy one into your own tags)
+        val epubTags = book.subjectList
+        if (epubTags.isNotEmpty()) {
+            SectionLabel(stringResource(R.string.detail_epub_tags))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                val mine = d.tags.map { it.name }.toSet()
+                epubTags.forEach { tag ->
+                    val added = tag.lowercase() in mine
+                    AssistChip(
+                        onClick = { if (!added) vm.addTag(tag) },
+                        label = { Text(tag) },
+                        leadingIcon = if (added) {
+                            { Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                        } else {
+                            null
+                        },
+                        shape = MaterialTheme.shapes.large,
+                    )
+                }
+            }
+            Text(
+                stringResource(R.string.detail_epub_tags_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+
+        // ---- your own tags
         SectionLabel(stringResource(R.string.detail_tags), action = stringResource(R.string.detail_add_tag)) {
             showTagDialog = true
         }
