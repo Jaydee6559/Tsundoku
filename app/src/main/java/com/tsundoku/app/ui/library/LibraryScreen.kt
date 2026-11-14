@@ -408,21 +408,14 @@ private fun FilterRow(filter: LibraryFilter, counts: Map<LibraryFilter, Int>, on
     val visible = LibraryFilter.entries.filter { it == LibraryFilter.ALL || it == filter || (counts[it] ?: 0) > 0 }
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         items(visible) { option ->
             val selected = option == filter
             FilterChip(
                 selected = selected,
                 onClick = { onFilter(option) },
-                label = {
-                    Text(
-                        stringResource(option.label(), counts[option] ?: 0),
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.padding(horizontal = 4.dp),
-                    )
-                },
-                modifier = Modifier.height(40.dp),
+                label = { Text(stringResource(option.label(), counts[option] ?: 0)) },
                 shape = MaterialTheme.shapes.large,
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = MaterialTheme.colorScheme.onBackground,
