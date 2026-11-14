@@ -172,14 +172,21 @@ fun LibraryScreen(
                 )
             }
 
-            // Location picker: only worth showing when books live in more than one place.
-            if (state.locations.size > 1 || state.location != null) {
-                LocationMenu(
-                    current = state.location,
-                    locations = state.locations,
-                    onPick = vm::setLocation,
-                    modifier = Modifier.padding(start = 16.dp, bottom = 6.dp),
-                )
+            // Location and tag pickers, each shown only when there's something to choose from.
+            val showLocations = state.locations.size > 1 || state.location != null
+            val showTags = state.tags.isNotEmpty() || state.tag != null
+            if (showLocations || showTags) {
+                Row(
+                    Modifier.padding(start = 16.dp, end = 16.dp, bottom = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    if (showLocations) {
+                        LocationMenu(current = state.location, locations = state.locations, onPick = vm::setLocation)
+                    }
+                    if (showTags) {
+                        TagMenu(current = state.tag, tags = state.tags, onPick = vm::setTag)
+                    }
+                }
             }
             FilterRow(filter = state.filter, counts = state.counts, onFilter = vm::setFilter)
             SummaryRow(state = state, scan = scan)

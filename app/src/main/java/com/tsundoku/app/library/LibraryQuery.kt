@@ -2,6 +2,7 @@ package com.tsundoku.app.library
 
 import com.tsundoku.app.data.db.BookEntity
 import com.tsundoku.app.data.db.ReadingStatus
+import com.tsundoku.app.data.db.subjectList
 import java.text.Normalizer
 
 enum class LibraryViewMode { GRID, LIST }
@@ -24,12 +25,13 @@ object LibraryQuery {
         sort: LibrarySort,
         filter: LibraryFilter,
         statusOf: (Long) -> ReadingStatus = { ReadingStatus.PLAN },
+        userTagsOf: (Long) -> List<String> = { emptyList() },
     ): List<BookEntity> {
         val tokens = normalize(query).split(' ').filter { it.isNotEmpty() }
         return books
             .asSequence()
             .filter { matchesFilter(it, filter, statusOf) }
-            .filter { tokens.isEmpty() || matchesSearch(it, tokens) }
+            .filter { tokens.isEmpty() || matchesSearch(it, tokens, userTagsOf(it.id)) }
             .sortedWith(comparator(sort))
             .toList()
     }
@@ -63,6 +65,41 @@ object LibraryQuery {
     fun inLocation(books: List<BookEntity>, location: String?): List<BookEntity> =
         if (location == null) books else books.filter { locationOf(it.folder) == location }
 
+    // ------------------------------------------------------------------ tags
+
+    /** All tags of a book, lowercased: the EPUB's own tags plus the ones you added. */
+    fun tagKeysOf(book: BookEntity, userTags: List<String>): Set<String> =
+        (book.subjectList + userTags).mapTo(HashSet()) { it.trim().lowercase() }.apply { remove("") }
+
+    /**
+     * Every tag with its book count, most used first. Tags that differ only in letter case are
+     * one tag; it's shown with its most common spelling.
+     */
+    fun tagCounts(books: List<BookEntity>, userTagsOf: (Long) -> List<String>): List<Pair<String, Int>> {
+        val counts = HashMap<String, Int>()
+        val spellings = HashMap<String, MutableMap<String, Int>>()
+        for (book in books) {
+            val seen = HashSet<String>()
+            for (raw in book.subjectList + userTagsOf(book.id)) {
+                val tag = raw.trim()
+                val key = tag.lowercase()
+                if (key.isEmpty() || !seen.add(key)) continue
+                counts[key] = (counts[key] ?: 0) + 1
+                spellings.getOrPut(key) { HashMap() }.merge(tag, 1, Int::plus)
+            }
+        }
+        return counts.entries
+            .map { (key, n) -> (spellings[key]?.maxByOrNull { it.value }?.key ?: key) to n }
+            .sortedWith(compareByDescending<Pair<String, Int>> { it.second }.thenBy { it.first.lowercase() })
+    }
+
+    /** Books that have [tag] (EPUB or yours, any letter case). Null tag = all books. */
+    fun withTag(books: List<BookEntity>, tag: String?, userTagsOf: (Long) -> List<String>): List<BookEntity> {
+        if (tag == null) return books
+        val key = tag.trim().lowercase()
+        return books.filter { key in tagKeysOf(it, userTagsOf(it.id)) }
+    }
+
     /** How many books each filter chip would show (ignores the search text). */
     fun counts(
         books: List<BookEntity>,
@@ -83,9 +120,10 @@ object LibraryQuery {
     }
 
     /** Every word typed must appear somewhere in title, author, series, EPUB tags or file name. */
-    private fun matchesSearch(book: BookEntity, tokens: List<String>): Boolean {
+    private fun matchesSearch(book: BookEntity, tokens: List<String>, userTags: List<String> = emptyList()): Boolean {
         val haystack = normalize(
-            listOfNotNull(book.title, book.authors, book.seriesName, book.subjects, book.fileName).joinToString(" "),
+            (listOfNotNull(book.title, book.authors, book.seriesName, book.subjects, book.fileName) + userTags)
+                .joinToString(" "),
         )
         return tokens.all { it in haystack }
     }

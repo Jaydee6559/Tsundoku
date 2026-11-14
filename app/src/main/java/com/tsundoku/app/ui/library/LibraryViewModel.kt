@@ -44,6 +44,10 @@ data class LibraryUiState(
     val statuses: Map<Long, ReadingStatus> = emptyMap(),
     /** Chosen location, or null for everywhere. */
     val location: String? = null,
+    /** Chosen tag, or null for all books. */
+    val tag: String? = null,
+    /** All tags (EPUB + yours) with book counts, for the tag menu. */
+    val tags: List<Pair<String, Int>> = emptyList(),
     /** All locations with book counts, for the location menu. */
     val locations: List<Pair<String, Int>> = emptyList(),
 ) {
@@ -77,15 +81,24 @@ class LibraryViewModel(
 
     val scanState: StateFlow<ScanState> = library.scanState
 
-    private val booksWithStatus = combine(library.books, tracking.observeStatuses()) { books, statuses ->
-        books to statuses
-    }
+    private data class LibraryData(
+        val books: List<BookEntity>,
+        val statuses: Map<Long, ReadingStatus>,
+        val userTags: Map<Long, List<String>>,
+    )
+
+    private val booksWithStatus = combine(
+        library.books,
+        tracking.observeStatuses(),
+        tracking.observeUserTags(),
+    ) { books, statuses, userTags -> LibraryData(books, statuses, userTags) }
 
     private data class ViewPrefs(
         val sort: LibrarySort,
         val filter: LibraryFilter,
         val view: LibraryViewMode,
         val location: String?,
+        val tag: String?,
     )
 
     private val viewPrefs = combine(
@@ -93,30 +106,38 @@ class LibraryViewModel(
         preferences.libraryFilter,
         preferences.libraryView,
         preferences.libraryLocation,
-    ) { sort, filter, view, location -> ViewPrefs(sort, filter, view, location) }
+        preferences.libraryTag,
+    ) { sort, filter, view, location, tag -> ViewPrefs(sort, filter, view, location, tag) }
 
     val uiState: StateFlow<LibraryUiState> = combine(
         booksWithStatus,
         query,
         viewPrefs,
-    ) { (books, statuses), q, prefs ->
+    ) { (books, statuses, userTags), q, prefs ->
         val statusOf: (Long) -> ReadingStatus = { statuses[it] ?: ReadingStatus.PLAN }
+        val userTagsOf: (Long) -> List<String> = { userTags[it].orEmpty() }
         val locations = LibraryQuery.locations(books)
         // A remembered location that no longer has books falls back to everywhere.
         val location = prefs.location?.takeIf { loc -> locations.any { it.first == loc } }
-        val here = LibraryQuery.inLocation(books, location)
+        val inLocation = LibraryQuery.inLocation(books, location)
+        // Tag menu lists the tags found in the chosen location.
+        val tags = LibraryQuery.tagCounts(inLocation, userTagsOf)
+        val tag = prefs.tag?.takeIf { t -> tags.any { it.first.equals(t, ignoreCase = true) } }
+        val here = LibraryQuery.withTag(inLocation, tag, userTagsOf)
         val sort = prefs.sort
         val filter = prefs.filter
         val view = prefs.view
         LibraryUiState(
             loaded = true,
-            books = LibraryQuery.apply(here, q, sort, filter, statusOf),
+            books = LibraryQuery.apply(here, q, sort, filter, statusOf, userTagsOf),
             totalCount = here.size,
             totalBytes = here.sumOf { it.sizeBytes },
             counts = LibraryQuery.counts(here, statusOf),
             statuses = statuses,
             location = location,
             locations = locations,
+            tag = tag,
+            tags = tags,
             sort = sort,
             filter = filter,
             view = view,
@@ -144,6 +165,10 @@ class LibraryViewModel(
 
     fun setDisplay(display: LibraryDisplay) {
         viewModelScope.launch { preferences.setLibraryDisplay(display) }
+    }
+
+    fun setTag(tag: String?) {
+        viewModelScope.launch { preferences.setLibraryTag(tag) }
     }
 
     fun setLocation(location: String?) {

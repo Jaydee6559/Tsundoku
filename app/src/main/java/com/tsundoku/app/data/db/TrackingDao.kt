@@ -34,6 +34,9 @@ interface TrackingDao {
     @Query("SELECT book_tags.bookId AS bookId, tags.name AS name FROM book_tags INNER JOIN tags ON tags.id = book_tags.tagId")
     suspend fun getAllTagNames(): List<BookTagName>
 
+    @Query("SELECT book_tags.bookId AS bookId, tags.name AS name FROM book_tags INNER JOIN tags ON tags.id = book_tags.tagId")
+    fun observeAllTagNames(): Flow<List<BookTagName>>
+
     @Insert
     suspend fun insertEvent(event: StatusEventEntity)
 

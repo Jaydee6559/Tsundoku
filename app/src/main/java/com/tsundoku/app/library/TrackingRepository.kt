@@ -43,6 +43,10 @@ class TrackingRepository(
     fun observeStatuses(): Flow<Map<Long, ReadingStatus>> =
         dao.observeAll().map { list -> list.associate { it.bookId to it.status } }
 
+    /** bookId -> the tags you added to it (for the Library tag filter and search). */
+    fun observeUserTags(): Flow<Map<Long, List<String>>> =
+        dao.observeAllTagNames().map { rows -> rows.groupBy({ it.bookId }, { it.name }) }
+
     /** Every tracking row (for Home: continue reading, counts). */
     fun observeAllTracking(): Flow<List<TrackingEntity>> = dao.observeAll()
 

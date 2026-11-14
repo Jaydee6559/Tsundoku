@@ -167,6 +167,11 @@
     <string name="filter_standalone">Standalone %1$d</string>
     <string name="filter_broken">Broken %1$d</string>
     <string name="location_all">All locations</string>
+    <string name="tag_all">All tags</string>
+    <string name="tag_menu_title">Filter by tag</string>
+    <string name="tag_search_hint">Search tags</string>
+    <string name="tag_none_found">No tags match.</string>
+    <string name="tag_hint">Tags written in the EPUBs plus the ones you added. Only some EPUBs include tags; add your own from a book\'s page or by long-pressing books.</string>
     <string name="location_menu">Choose location</string>
     <string name="location_item">%1$s · %2$d</string>
     <string name="location_readera_hint">Copies ReadEra made when you opened books from Tsundoku</string>

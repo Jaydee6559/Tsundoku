@@ -52,6 +52,7 @@ class AppPreferences(private val context: Context) {
         val LIBRARY_SORT = stringPreferencesKey("library_sort")
         val LIBRARY_FILTER = stringPreferencesKey("library_filter")
         val LIBRARY_LOCATION = stringPreferencesKey("library_location")
+        val LIBRARY_TAG = stringPreferencesKey("library_tag")
         val THEME = stringPreferencesKey("theme")
         val TILE_SIZE = stringPreferencesKey("tile_size")
         val FULL_TITLES = booleanPreferencesKey("full_titles")
@@ -83,6 +84,15 @@ class AppPreferences(private val context: Context) {
     val libraryLocation: Flow<String?> = context.dataStore.data
         .map { prefs -> prefs[Keys.LIBRARY_LOCATION]?.takeIf { it.isNotEmpty() } }
         .distinctUntilChanged()
+
+    /** Chosen tag filter, or null for all books. */
+    val libraryTag: Flow<String?> = context.dataStore.data
+        .map { prefs -> prefs[Keys.LIBRARY_TAG]?.takeIf { it.isNotEmpty() } }
+        .distinctUntilChanged()
+
+    suspend fun setLibraryTag(value: String?) {
+        context.dataStore.edit { it[Keys.LIBRARY_TAG] = value.orEmpty() }
+    }
 
     suspend fun setLibraryLocation(value: String?) {
         context.dataStore.edit { it[Keys.LIBRARY_LOCATION] = value.orEmpty() }
