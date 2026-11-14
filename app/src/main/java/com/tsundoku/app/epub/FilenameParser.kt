@@ -16,7 +16,8 @@ data class FilenameInfo(
 object FilenameParser {
 
     private val EXTENSION = Regex("\\.epub$", RegexOption.IGNORE_CASE)
-    private val BRACKETS = Regex("\\[[^\\]]*]|\\{[^}]*}")
+    // Every bracket escaped: Android's regex engine (ICU) is stricter than desktop Java's.
+    private val BRACKETS = Regex("\\[[^\\]]*\\]|\\{[^\\}]*\\}")
     private val TRAILING_PARENS = Regex("\\s*\\([^)]*\\)\\s*$")
     private val SEPARATORS = " -–—:,._#"
 

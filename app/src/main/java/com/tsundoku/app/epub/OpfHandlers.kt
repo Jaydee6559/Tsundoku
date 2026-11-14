@@ -127,4 +127,6 @@ internal class OpfHandler : DefaultHandler() {
 }
 
 /** Collapses whitespace and trims. */
-internal fun String.cleanText(): String = replace(Regex("\\s+"), " ").trim()
+private val WHITESPACE = Regex("\\s+")
+
+internal fun String.cleanText(): String = replace(WHITESPACE, " ").trim()

@@ -5,6 +5,7 @@ import com.tsundoku.app.data.db.BookEntity
 import com.tsundoku.app.epub.EpubParser
 import com.tsundoku.app.epub.EpubResult
 import com.tsundoku.app.epub.FileFingerprint
+import com.tsundoku.app.epub.FilenameInfo
 import com.tsundoku.app.epub.FilenameParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -121,7 +122,9 @@ class LibraryScanner(
     } catch (t: Throwable) {
         if (t is kotlinx.coroutines.CancellationException) throw t
         val f = File(file.path)
-        val fromName = FilenameParser.parse(f.name)
+        // Even the fallback must not fail: use the bare file name if parsing it breaks too.
+        val fromName = runCatching { FilenameParser.parse(f.name) }
+            .getOrElse { FilenameInfo(title = f.nameWithoutExtension, seriesName = null, volume = null) }
         BookEntity(
             path = file.path,
             fileName = f.name,
