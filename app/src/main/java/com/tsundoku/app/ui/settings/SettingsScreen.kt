@@ -103,17 +103,24 @@ fun SettingsScreen(
         }
 
         Section(stringResource(R.string.settings_section_appearance)) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.DarkMode, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(14.dp))
-                Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            // Label on its own line, choices underneath: on a phone-width screen the chips
+            // squeezed "Theme" into a column one letter wide when they shared a line.
+            Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Outlined.DarkMode, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(14.dp))
+                    Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                }
+                Row(
+                    Modifier.padding(start = 34.dp, top = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     listOf(ThemeMode.SYSTEM to R.string.theme_system, ThemeMode.LIGHT to R.string.theme_light, ThemeMode.DARK to R.string.theme_dark)
                         .forEach { (mode, label) ->
                             FilterChip(
                                 selected = theme == mode,
                                 onClick = { scope.launch { prefs.setThemeMode(mode) } },
-                                label = { Text(stringResource(label)) },
+                                label = { Text(stringResource(label), maxLines = 1) },
                                 shape = MaterialTheme.shapes.large,
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = MaterialTheme.colorScheme.onBackground,
