@@ -1,12 +1,15 @@
 name: Build debug APK
 
+# Pushes to main are built by release.yml (signed + published).
+# This workflow checks pull requests and other branches, and can be run by hand.
 on:
   push:
-    branches: [main]
+    branches-ignore: [main]
     paths-ignore:
       - "**.md"
       - "docs/**"
       - "LICENSE"
+      - "scripts/**"
   pull_request:
     branches: [main]
   workflow_dispatch: # "Run workflow" button in the Actions tab

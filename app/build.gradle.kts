@@ -4,6 +4,22 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// ---------------------------------------------------------------------------
+// Release signing + versioning come ONLY from environment variables.
+// In CI they are filled from GitHub Secrets; nothing secret lives in this repo.
+// ---------------------------------------------------------------------------
+fun env(name: String): String? = providers.environmentVariable(name).orNull?.takeIf { it.isNotBlank() }
+
+val releaseKeystorePath = env("TSUNDOKU_KEYSTORE_PATH")
+val hasReleaseSigning = releaseKeystorePath != null &&
+    env("TSUNDOKU_KEYSTORE_PASSWORD") != null &&
+    env("TSUNDOKU_KEY_ALIAS") != null &&
+    env("TSUNDOKU_KEY_PASSWORD") != null
+
+// CI passes the run number so every published build has a higher versionCode (Android requires it for updates).
+val buildNumber = env("TSUNDOKU_BUILD_NUMBER")?.toIntOrNull() ?: 1
+val baseVersionName = "0.1.0"
+
 android {
     namespace = "com.tsundoku.app"
     compileSdk = 35
@@ -12,8 +28,19 @@ android {
         applicationId = "com.tsundoku.app"
         minSdk = 30 // Android 11: first version with "All files access"
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = buildNumber
+        versionName = if (env("TSUNDOKU_BUILD_NUMBER") != null) "$baseVersionName-dev.$buildNumber" else baseVersionName
+    }
+
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(releaseKeystorePath!!)
+                storePassword = env("TSUNDOKU_KEYSTORE_PASSWORD")
+                keyAlias = env("TSUNDOKU_KEY_ALIAS")
+                keyPassword = env("TSUNDOKU_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -28,7 +55,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            // Signing is added in Batch 2 (keys come from GitHub Secrets, never from the repo).
+            // Signed only when the key is provided (CI). Without it, the release APK is left unsigned.
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
