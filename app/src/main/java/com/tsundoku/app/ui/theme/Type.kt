@@ -2,15 +2,17 @@ package com.tsundoku.app.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.tsundoku.app.R
 
 /**
- * Serif is used only for screen titles and book titles; everything else uses the
- * system sans (Roboto). The bundled Lora font replaces FontFamily.Serif in a later batch.
+ * Lora (SIL Open Font License, see docs/licenses/Lora-OFL.txt) for screen and book titles;
+ * everything else uses the system sans (Roboto).
  */
-val TitleFontFamily: FontFamily = FontFamily.Serif
+val TitleFontFamily: FontFamily = FontFamily(Font(R.font.lora, FontWeight.Normal))
 private val BodyFontFamily: FontFamily = FontFamily.Default
 
 private val base = Typography()

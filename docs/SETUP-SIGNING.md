@@ -62,7 +62,7 @@ Set-Clipboard -Value " "
 
 Push any commit to `main` (or GitHub → **Actions → Release (signed APK) → Run workflow**).
 When it finishes, **Releases** (right side of the repo page) shows
-`Tsundoku 0.1.0-dev.N` with `tsundoku-0.1.0-dev.N.apk` attached.
+`Tsundoku 1.0.N` with `tsundoku-1.0.N.apk` attached.
 
 If the run fails at **"Check signing secrets exist"**, a secret name is misspelled or missing.
 
@@ -73,7 +73,7 @@ If the run fails at **"Check signing secrets exist"**, a secret name is misspell
 1. Install **Obtainium** from its official GitHub releases page or F-Droid.
 2. Obtainium → **Add App**.
 3. **App source URL:** your repo's address, `https://github.com/<your-username>/Tsundoku`.
-4. Turn on **Include prereleases** (dev builds are published as pre-releases).
+4. Since 1.0, builds are normal releases: **Include prereleases** is no longer needed (leaving it on is harmless).
 5. Tap **Add**, then **Install**. Allow "Install unknown apps" for Obtainium when asked.
 6. Optional: Obtainium settings → turn on background update checks.
 

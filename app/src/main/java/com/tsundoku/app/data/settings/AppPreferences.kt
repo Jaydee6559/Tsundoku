@@ -36,6 +36,8 @@ data class LibraryDisplay(
     val showLocation: Boolean = true,
     /** The EPUB's own tags (genres) under each book. */
     val showEpubTags: Boolean = true,
+    /** Grid shows covers only, no text (a "bookshelf" look). */
+    val coversOnly: Boolean = false,
 )
 
 /** Default folder for books added with "Share → Tsundoku". */
@@ -60,6 +62,7 @@ class AppPreferences(private val context: Context) {
         val SHOW_STATUS = booleanPreferencesKey("show_status")
         val SHOW_LOCATION = booleanPreferencesKey("show_location")
         val SHOW_EPUB_TAGS = booleanPreferencesKey("show_epub_tags")
+        val COVERS_ONLY = booleanPreferencesKey("covers_only")
         val AMOLED = booleanPreferencesKey("amoled")
         val EXCLUDED = stringSetPreferencesKey("excluded_folders")
         val SHARE_FOLDER = stringPreferencesKey("share_folder")
@@ -108,6 +111,7 @@ class AppPreferences(private val context: Context) {
             showStatus = p[Keys.SHOW_STATUS] ?: true,
             showLocation = p[Keys.SHOW_LOCATION] ?: true,
             showEpubTags = p[Keys.SHOW_EPUB_TAGS] ?: true,
+            coversOnly = p[Keys.COVERS_ONLY] ?: false,
         )
     }.distinctUntilChanged()
 
@@ -119,6 +123,7 @@ class AppPreferences(private val context: Context) {
             it[Keys.SHOW_STATUS] = d.showStatus
             it[Keys.SHOW_LOCATION] = d.showLocation
             it[Keys.SHOW_EPUB_TAGS] = d.showEpubTags
+            it[Keys.COVERS_ONLY] = d.coversOnly
         }
     }
 

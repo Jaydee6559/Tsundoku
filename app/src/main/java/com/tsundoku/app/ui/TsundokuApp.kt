@@ -32,7 +32,9 @@ import com.tsundoku.app.ui.series.SeriesDetailScreen
 import com.tsundoku.app.ui.series.SeriesListScreen
 import android.net.Uri
 import com.tsundoku.app.AppContainer
+import com.tsundoku.app.ui.settings.DuplicatesScreen
 import com.tsundoku.app.ui.settings.ExcludedFoldersScreen
+import com.tsundoku.app.ui.stats.StatsScreen
 import com.tsundoku.app.ui.settings.RestoreScreen
 import com.tsundoku.app.ui.settings.ScannerStatusScreen
 import com.tsundoku.app.ui.settings.SettingsScreen
@@ -55,7 +57,7 @@ fun TsundokuApp(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     // Full-height screens: no bottom bar there.
-    val showBottomBar = currentDestination?.route !in setOf(BOOK_ROUTE, TRASH_ROUTE, SERIES_ROUTE, UP_NEXT_ROUTE, EXCLUDED_ROUTE, RESTORE_ROUTE, STATUS_ROUTE)
+    val showBottomBar = currentDestination?.route !in setOf(BOOK_ROUTE, TRASH_ROUTE, SERIES_ROUTE, UP_NEXT_ROUTE, EXCLUDED_ROUTE, RESTORE_ROUTE, STATUS_ROUTE, DUPLICATES_ROUTE, STATS_ROUTE)
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -164,6 +166,8 @@ fun TsundokuApp(
                     onOpenExcluded = { navController.navigate(EXCLUDED_ROUTE) },
                     onOpenRestore = { navController.navigate(RESTORE_ROUTE) },
                     onOpenStatus = { navController.navigate(STATUS_ROUTE) },
+                    onOpenDuplicates = { navController.navigate(DUPLICATES_ROUTE) },
+                    onOpenStats = { navController.navigate(STATS_ROUTE) },
                 )
             }
             composable(EXCLUDED_ROUTE) {
@@ -171,6 +175,16 @@ fun TsundokuApp(
             }
             composable(RESTORE_ROUTE) {
                 RestoreScreen(container = container, onBack = { navController.popBackStack() })
+            }
+            composable(DUPLICATES_ROUTE) {
+                DuplicatesScreen(
+                    container = container,
+                    onBack = { navController.popBackStack() },
+                    onOpenBook = { id -> navController.navigate("book/$id") },
+                )
+            }
+            composable(STATS_ROUTE) {
+                StatsScreen(container = container, onBack = { navController.popBackStack() })
             }
             composable(STATUS_ROUTE) {
                 ScannerStatusScreen(container = container, onBack = { navController.popBackStack() })
@@ -186,3 +200,5 @@ private const val UP_NEXT_ROUTE = "up-next"
 private const val EXCLUDED_ROUTE = "settings/excluded"
 private const val RESTORE_ROUTE = "settings/restore"
 private const val STATUS_ROUTE = "settings/status"
+private const val DUPLICATES_ROUTE = "settings/duplicates"
+private const val STATS_ROUTE = "stats"

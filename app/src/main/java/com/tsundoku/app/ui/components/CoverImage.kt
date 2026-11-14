@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontFamily
+import com.tsundoku.app.ui.theme.TitleFontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -82,7 +82,7 @@ fun CoverImage(thumbPath: String?, title: String, modifier: Modifier = Modifier)
             Text(
                 text = title,
                 color = Color.White.copy(alpha = 0.92f),
-                fontFamily = FontFamily.Serif,
+                fontFamily = TitleFontFamily,
                 fontSize = 8.sp,
                 lineHeight = 9.sp,
                 maxLines = 3,

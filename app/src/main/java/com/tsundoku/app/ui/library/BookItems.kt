@@ -66,7 +66,12 @@ fun BookGridItem(
                     .aspectRatio(2f / 3f),
             )
             if (selected) SelectedMark(Modifier.align(Alignment.TopEnd).padding(5.dp))
+            // Covers-only mode keeps a tiny status dot so you can still tell what you're reading.
+            if (display.coversOnly && display.showStatus && book.parseError == null) {
+                StatusDotOnCover(status, Modifier.align(Alignment.BottomEnd).padding(5.dp))
+            }
         }
+        if (display.coversOnly) return@Column
         Spacer(Modifier.height(6.dp))
         Text(
             book.title,
@@ -205,6 +210,19 @@ private fun TagPill(text: String) {
             modifier = Modifier.padding(horizontal = 7.dp, vertical = 1.dp),
         )
     }
+}
+
+/** A small status dot with a light ring, readable on any cover. */
+@Composable
+private fun StatusDotOnCover(status: ReadingStatus, modifier: Modifier = Modifier) {
+    val (_, ink) = com.tsundoku.app.ui.components.statusColors(status)
+    Box(
+        modifier
+            .size(12.dp)
+            .background(MaterialTheme.colorScheme.background, CircleShape)
+            .padding(2.dp)
+            .background(ink, CircleShape),
+    )
 }
 
 /** Check mark on a selected book. */

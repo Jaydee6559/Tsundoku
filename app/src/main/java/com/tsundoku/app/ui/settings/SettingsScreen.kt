@@ -21,6 +21,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Backup
+import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.FolderOff
@@ -62,6 +64,8 @@ fun SettingsScreen(
     onOpenExcluded: () -> Unit,
     onOpenRestore: () -> Unit,
     onOpenStatus: () -> Unit,
+    onOpenDuplicates: () -> Unit,
+    onOpenStats: () -> Unit,
 ) {
     val prefs = container.preferences
     val context = LocalContext.current
@@ -100,6 +104,10 @@ fun SettingsScreen(
             SettingRow(Icons.Outlined.FolderOpen, stringResource(R.string.settings_share_folder), shareFolder, onClick = { pickShareFolder.launch(null) }, chevron = true)
             Divider()
             SettingRow(Icons.Outlined.Insights, stringResource(R.string.settings_status), stringResource(R.string.settings_status_sub), onClick = onOpenStatus, chevron = true)
+            Divider()
+            SettingRow(Icons.Outlined.ContentCopy, stringResource(R.string.settings_duplicates), stringResource(R.string.settings_duplicates_sub), onClick = onOpenDuplicates, chevron = true)
+            Divider()
+            SettingRow(Icons.Outlined.BarChart, stringResource(R.string.settings_stats), stringResource(R.string.settings_stats_sub), onClick = onOpenStats, chevron = true)
         }
 
         Section(stringResource(R.string.settings_section_appearance)) {

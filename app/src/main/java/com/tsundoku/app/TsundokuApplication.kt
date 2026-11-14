@@ -19,6 +19,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.FlowPreview
+import com.tsundoku.app.widget.ContinueReadingWidget
 import kotlinx.coroutines.sync.Mutex
 import com.tsundoku.app.notifications.NewBooksNotifier
 import com.tsundoku.app.work.LibrarySyncWorker
@@ -42,6 +45,8 @@ class TsundokuApplication : Application() {
 }
 
 class AppContainer(application: Application) {
+    private val appContext = application.applicationContext
+
     /** Lives as long as the app: background work (scans) runs here. */
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -106,6 +111,7 @@ class AppContainer(application: Application) {
      *  - quiet updates (live syncs, background scans) -> one "novels added" notification,
      *  - any finished scan or sync -> re-check which folders to watch.
      */
+    @OptIn(FlowPreview::class)
     fun startBackgroundWork() {
         appScope.launch {
             library.quietResults.collect { done ->
@@ -116,5 +122,13 @@ class AppContainer(application: Application) {
         appScope.launch {
             library.scanState.collect { if (it is ScanState.Done) watcher.refresh() }
         }
+        // Keep the home-screen widget in step with your reading (status, progress, opened book).
+        appScope.launch {
+            tracking.observeAllTracking()
+                .debounce(WIDGET_DEBOUNCE_MS)
+                .collect { ContinueReadingWidget.refreshAll(appContext) }
+        }
     }
 }
+
+private const val WIDGET_DEBOUNCE_MS = 1_000L

@@ -29,8 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
+import com.tsundoku.app.ui.theme.TitleFontFamily
 import com.tsundoku.app.R
 import com.tsundoku.app.library.EpubDiscovery
 import com.tsundoku.app.library.FolderCount
@@ -102,7 +102,7 @@ fun FirstScanScreen(
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
                     text = found.toString(),
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = TitleFontFamily,
                     fontSize = 48.sp,
                     lineHeight = 52.sp,
                     color = MaterialTheme.colorScheme.primary,

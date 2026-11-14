@@ -56,6 +56,11 @@ fun DisplayOptionsDialog(
                     onPick = { onDisplay(display.copy(tileSize = it)) },
                 )
                 Toggle(
+                    title = stringResource(R.string.display_covers_only),
+                    subtitle = stringResource(R.string.display_covers_only_sub),
+                    checked = display.coversOnly,
+                ) { onDisplay(display.copy(coversOnly = it)) }
+                Toggle(
                     title = stringResource(R.string.display_full_titles),
                     subtitle = stringResource(R.string.display_full_titles_sub),
                     checked = display.fullTitles,

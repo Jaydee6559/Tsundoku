@@ -25,7 +25,8 @@ val hasReleaseSigning = releaseKeystorePath != null &&
 
 // CI passes the run number so every published build has a higher versionCode (Android requires it for updates).
 val buildNumber = env("TSUNDOKU_BUILD_NUMBER")?.toIntOrNull() ?: 1
-val baseVersionName = "0.1.0"
+// v1.0: every published build is "1.0.<build number>" (e.g. 1.0.25).
+val baseVersionName = "1.0"
 
 android {
     namespace = "com.tsundoku.app"
@@ -36,7 +37,7 @@ android {
         minSdk = 30 // Android 11: first version with "All files access"
         targetSdk = 35
         versionCode = buildNumber
-        versionName = if (env("TSUNDOKU_BUILD_NUMBER") != null) "$baseVersionName-dev.$buildNumber" else baseVersionName
+        versionName = if (env("TSUNDOKU_BUILD_NUMBER") != null) "$baseVersionName.$buildNumber" else baseVersionName
     }
 
     signingConfigs {
@@ -99,6 +100,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)

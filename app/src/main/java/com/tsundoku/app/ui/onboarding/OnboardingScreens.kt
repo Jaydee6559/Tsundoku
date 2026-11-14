@@ -35,7 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tsundoku.app.R
-import com.tsundoku.app.ui.screens.BookPile
+import com.tsundoku.app.ui.components.BookPile
 import com.tsundoku.app.ui.theme.TsundokuTheme
 
 // Layouts follow docs/design/Tsundoku-UI-Design.pdf, page 2 (Onboarding).
