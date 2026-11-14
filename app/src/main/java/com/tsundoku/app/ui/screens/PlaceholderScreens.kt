@@ -98,9 +98,9 @@ fun PlaceholderScreen(@StringRes title: Int, @StringRes body: Int) {
     }
 }
 
-/** The book-spine illustration from the welcome screen design. */
+/** The book-spine illustration from the welcome screen design (also used by onboarding). */
 @Composable
-private fun BookPile() {
+internal fun BookPile() {
     val spines = listOf(
         Color(0xFFA0673E) to 70,
         Color(0xFF9C6B7A) to 84,

@@ -4,10 +4,19 @@
 
     <!--
         Privacy: there is intentionally NO INTERNET permission.
-        Storage permissions are added in Batch 3 (All files access).
     -->
 
+    <!--
+        "All files access" (Android 11+): lets Tsundoku find EPUBs in every folder and
+        notice new ones instantly. Granted by the user on a system settings page.
+        Fine for a sideloaded personal app; Google Play would need a policy declaration.
+    -->
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+
     <application
+        android:name=".TsundokuApplication"
         android:allowBackup="false"
         android:fullBackupContent="false"
         android:dataExtractionRules="@xml/data_extraction_rules"

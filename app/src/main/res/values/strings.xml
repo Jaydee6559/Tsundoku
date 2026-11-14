@@ -13,4 +13,27 @@
     <string name="placeholder_library">Your books will appear here after the first scan.</string>
     <string name="placeholder_series">Series and missing volumes will show here.</string>
     <string name="placeholder_settings">Folders, theme, backups and more.</string>
+
+    <!-- Onboarding -->
+    <string name="onb_welcome_body">Every EPUB on your phone, in one calm place. Track what you read in ReadEra and keep the pile in order.</string>
+    <string name="onb_get_started">Get started</string>
+    <string name="onb_step_1">Step 1 of 2</string>
+    <string name="onb_step_2">Step 2 of 2</string>
+    <string name="onb_back">Back</string>
+    <string name="onb_perm_title">Find every EPUB on your phone</string>
+    <string name="onb_perm_body">Your books are spread across folders. Tsundoku needs All files access to find them and notice new ones right away.</string>
+    <string name="onb_trust_offline_title">Stays on your phone</string>
+    <string name="onb_trust_offline_body">No internet permission at all</string>
+    <string name="onb_trust_readonly_title">Your files stay untouched</string>
+    <string name="onb_trust_readonly_body">Tsundoku never edits your EPUBs</string>
+    <string name="onb_trust_trash_title">Deletes go to Trash first</string>
+    <string name="onb_trust_trash_body">Undo anytime for 30 days</string>
+    <string name="onb_allow">Allow all files access</string>
+    <string name="onb_allow_again">Open settings again</string>
+    <string name="onb_allow_hint">Opens Android settings. Turn on Tsundoku, then come back.</string>
+    <string name="onb_not_yet">Access isn\'t on yet. Turn on \"Allow access to manage all files\" for Tsundoku.</string>
+    <string name="onb_ready_title">You\'re all set</string>
+    <string name="onb_ready_body">Tsundoku can now see your EPUBs. Scanning your library arrives in the next update.</string>
+    <string name="onb_open_library">Open library</string>
+    <string name="onb_granted">All files access is on</string>
 </resources>
