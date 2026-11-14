@@ -17,8 +17,10 @@ import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * One full scan: find EPUBs -> compare with the database -> read only what's new or changed.
- * After the first scan, a rescan with no changes only touches file sizes/dates (fast).
+ * Keeps the database in step with storage.
+ *  - [scan]: full pass over the whole phone (app start, "Scan now", background job).
+ *  - [syncPaths]: only the files a folder watcher just reported (instant updates).
+ * Both compare with the database and read only what's new or changed.
  */
 class LibraryScanner(
     private val discovery: EpubDiscovery,
@@ -29,7 +31,7 @@ class LibraryScanner(
     @OptIn(ExperimentalCoroutinesApi::class)
     private val io = Dispatchers.IO.limitedParallelism(PARALLELISM)
 
-    suspend fun scan(onProgress: (ScanState) -> Unit) = withContext(Dispatchers.IO) {
+    suspend fun scan(onProgress: (ScanState) -> Unit): ScanState.Done = withContext(Dispatchers.IO) {
         val started = System.currentTimeMillis()
         onProgress(ScanState.Discovering)
 
@@ -42,9 +44,43 @@ class LibraryScanner(
             .sortedByDescending { it.count }
 
         val plan = ScanPlanner.plan(dao.scanRows(), found) { safeFingerprint(it) }
+        applyPlan(plan, root, found.size, folders, started, onProgress)
+    }
+
+    /**
+     * Updates only [paths] (files created, changed, moved or deleted in a watched folder).
+     * Missing books are included so a file that reappears elsewhere is recognised as a move.
+     */
+    suspend fun syncPaths(paths: Set<String>): ScanState.Done = withContext(Dispatchers.IO) {
+        val started = System.currentTimeMillis()
+        val root = discovery.storageRoot.absolutePath
+        val found = paths.mapNotNull { path ->
+            val f = File(path)
+            if (f.isFile && f.length() > 0 && f.name.endsWith(".epub", ignoreCase = true)) {
+                FoundFile(f.absolutePath, f.length(), f.lastModified())
+            } else {
+                null
+            }
+        }
+        val rows = (
+            dao.missingScanRows() +
+                paths.toList().chunked(BookDao.CHUNK).flatMap { dao.scanRowsForPaths(it) }
+            ).distinctBy { it.id }
+        val plan = ScanPlanner.plan(rows, found) { safeFingerprint(it) }
+        applyPlan(plan, root, found.size, emptyList(), started) {}
+    }
+
+    /** Writes a plan to the database: cheap updates first, then reading new/changed books. */
+    private suspend fun applyPlan(
+        plan: ScanPlan,
+        root: String,
+        foundCount: Int,
+        folders: List<FolderCount>,
+        started: Long,
+        onProgress: (ScanState) -> Unit,
+    ): ScanState.Done = coroutineScope {
         val now = System.currentTimeMillis()
 
-        // Cheap updates first: moves, returns, and files gone missing.
         for ((id, file) in plan.moved) {
             val f = File(file.path)
             dao.moveFile(id, file.path, f.name, folderOf(file.path, root), file.sizeBytes, file.lastModified, now)
@@ -52,58 +88,54 @@ class LibraryScanner(
         plan.reappeared.chunked(BookDao.CHUNK).forEach { dao.markPresent(it, now) }
         plan.missing.chunked(BookDao.CHUNK).forEach { dao.markMissing(it, now) }
 
-        // Expensive part: read metadata + covers, in parallel, saving in batches.
         val total = plan.newFiles.size + plan.changed.size
         val processed = AtomicInteger(0)
         val broken = AtomicInteger(0)
-        fun report() = onProgress(ScanState.Reading(found.size, processed.get(), total, folders))
+        val addedTitles = mutableListOf<String>()
+        fun report() = onProgress(ScanState.Reading(foundCount, processed.get(), total, folders))
         report()
 
         plan.newFiles.chunked(BATCH).forEach { batch ->
-            val entities = coroutineScope {
-                batch.map { (file, fp) ->
-                    async(io) {
-                        safeReadBook(file, fp, root, addedAt = now).also {
-                            if (it.parseError != null) broken.incrementAndGet()
-                            processed.incrementAndGet()
-                        }
+            val entities = batch.map { (file, fp) ->
+                async(io) {
+                    safeReadBook(file, fp, root, addedAt = now).also {
+                        if (it.parseError != null) broken.incrementAndGet()
+                        processed.incrementAndGet()
                     }
-                }.awaitAll()
-            }
+                }
+            }.awaitAll()
             dao.insertInChunks(entities)
+            if (addedTitles.size < MAX_TITLES) addedTitles += entities.take(MAX_TITLES - addedTitles.size).map { it.title }
             report()
         }
 
         plan.changed.chunked(BATCH).forEach { batch ->
             val old = dao.getByIds(batch.map { it.first }).associateBy { it.id }
-            val entities = coroutineScope {
-                batch.mapNotNull { (id, file) ->
-                    val previous = old[id] ?: return@mapNotNull null
-                    async(io) {
-                        val fp = safeFingerprint(file)
-                        safeReadBook(file, fp, root, addedAt = previous.addedAt).copy(id = id).also {
-                            if (it.parseError != null) broken.incrementAndGet()
-                            processed.incrementAndGet()
-                        }
+            val entities = batch.mapNotNull { (id, file) ->
+                val previous = old[id] ?: return@mapNotNull null
+                async(io) {
+                    val fp = safeFingerprint(file)
+                    safeReadBook(file, fp, root, addedAt = previous.addedAt).copy(id = id).also {
+                        if (it.parseError != null) broken.incrementAndGet()
+                        processed.incrementAndGet()
                     }
-                }.awaitAll()
-            }
+                }
+            }.awaitAll()
             dao.updateAll(entities)
             report()
         }
 
-        onProgress(
-            ScanState.Done(
-                found = found.size,
-                added = plan.newFiles.size,
-                updated = plan.changed.size,
-                moved = plan.moved.size,
-                missing = plan.missing.size,
-                broken = broken.get(),
-                durationMs = System.currentTimeMillis() - started,
-                folders = folders,
-            ),
-        )
+        ScanState.Done(
+            found = foundCount,
+            added = plan.newFiles.size,
+            updated = plan.changed.size,
+            moved = plan.moved.size,
+            missing = plan.missing.size,
+            broken = broken.get(),
+            durationMs = System.currentTimeMillis() - started,
+            folders = folders,
+            addedTitles = addedTitles.toList(),
+        ).also(onProgress)
     }
 
     /** A file we can't read still gets a stable id-like value instead of stopping the scan. */
@@ -192,5 +224,6 @@ class LibraryScanner(
     private companion object {
         const val PARALLELISM = 4
         const val BATCH = 40
+        const val MAX_TITLES = 5
     }
 }

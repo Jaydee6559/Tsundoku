@@ -6,12 +6,19 @@ import com.tsundoku.app.data.settings.AppPreferences
 import com.tsundoku.app.diagnostics.CrashLog
 import com.tsundoku.app.library.EpubDiscovery
 import com.tsundoku.app.library.LibraryRepository
+import com.tsundoku.app.library.LiveWatcher
+import com.tsundoku.app.library.ScanState
 import com.tsundoku.app.library.LibraryScanner
 import com.tsundoku.app.library.TrackingRepository
 import com.tsundoku.app.library.TrashRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import com.tsundoku.app.notifications.NewBooksNotifier
+import com.tsundoku.app.work.LibrarySyncWorker
+import android.os.Environment
 import java.io.File
 
 /**
@@ -25,6 +32,8 @@ class TsundokuApplication : Application() {
         super.onCreate()
         CrashLog.install(this) // first, so even startup crashes are recorded
         container = AppContainer(this)
+        container.startBackgroundWork()
+        LibrarySyncWorker.schedule(this)
     }
 }
 
@@ -33,6 +42,9 @@ class AppContainer(application: Application) {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     val preferences: AppPreferences by lazy { AppPreferences(application) }
+
+    /** Taken by scans, live syncs and Trash so they never change the books table at the same time. */
+    private val libraryLock = Mutex()
 
     private val database: TsundokuDatabase by lazy { TsundokuDatabase.create(application) }
 
@@ -45,6 +57,7 @@ class AppContainer(application: Application) {
                 coversDir = File(application.filesDir, "covers"),
             ),
             scope = appScope,
+            lock = libraryLock,
         )
     }
 
@@ -53,9 +66,39 @@ class AppContainer(application: Application) {
     val trash: TrashRepository by lazy {
         TrashRepository(
             dao = database.bookDao(),
-            storageRoot = { android.os.Environment.getExternalStorageDirectory() },
+            storageRoot = { Environment.getExternalStorageDirectory() },
             coversDir = File(application.filesDir, "covers"),
             scope = appScope,
+            lock = libraryLock,
         )
+    }
+
+    val notifier: NewBooksNotifier by lazy { NewBooksNotifier(application) }
+
+    /** Instant updates for folders that hold books (and common download folders). */
+    val watcher: LiveWatcher by lazy {
+        LiveWatcher(
+            scope = appScope,
+            storageRoot = { Environment.getExternalStorageDirectory() },
+            bookFolders = { root -> library.bookFolders(root) },
+            onChanges = { paths -> library.syncPaths(paths) },
+        )
+    }
+
+    /**
+     * Hooks things together once at app start:
+     *  - quiet updates (live syncs, background scans) -> one "novels added" notification,
+     *  - any finished scan or sync -> re-check which folders to watch.
+     */
+    fun startBackgroundWork() {
+        appScope.launch {
+            library.quietResults.collect { done ->
+                notifier.onBooksAdded(done.added, done.addedTitles)
+                if (done.added > 0 || done.moved > 0) watcher.refresh()
+            }
+        }
+        appScope.launch {
+            library.scanState.collect { if (it is ScanState.Done) watcher.refresh() }
+        }
     }
 }

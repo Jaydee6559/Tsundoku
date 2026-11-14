@@ -23,8 +23,9 @@ class TrashRepository(
     private val storageRoot: () -> File,
     private val coversDir: File,
     private val scope: CoroutineScope,
+    /** Shared with scans and live syncs, so file moves and database updates never interleave. */
+    private val lock: Mutex,
 ) {
-    private val mutex = Mutex()
     private val trashDir: File get() = File(storageRoot(), ".tsundoku/trash")
 
     val trashed: Flow<List<BookEntity>> = dao.observeTrash()
@@ -35,13 +36,15 @@ class TrashRepository(
         var moved = 0
         for (book in dao.getByIds(ids.toList())) {
             if (book.trashedAt != null) continue
-            val src = File(book.path)
-            val dest = File(trashDir, TrashRules.trashFileName(book.id, now, src.name))
-            // A file that's already gone still leaves the library (Trash cleans up its record later).
-            val existed = src.exists()
-            if (existed && !moveFile(src, dest)) continue
-            dao.markTrashed(book.id, trashPath = if (existed) dest.path else book.path, originalPath = book.path, now = now)
-            moved++
+            runCatching {
+                val src = File(book.path)
+                val dest = File(trashDir, TrashRules.trashFileName(book.id, now, src.name))
+                // A file that's already gone still leaves the library (Trash cleans up its record later).
+                val existed = src.exists()
+                if (existed && !moveFile(src, dest)) return@runCatching
+                dao.markTrashed(book.id, trashPath = if (existed) dest.path else book.path, originalPath = book.path, now = now)
+                moved++
+            }
         }
         moved
     }
@@ -59,12 +62,16 @@ class TrashRepository(
         for (book in dao.getByIds(ids.toList())) {
             if (book.trashedAt == null) continue
             val original = book.originalPath ?: continue
-            val src = File(book.path)
-            val target = File(TrashRules.restoreTarget(original) { File(it).exists() })
-            val ok = if (src.exists()) moveFile(src, target) else false
-            if (ok) {
-                dao.markRestored(book.id, target.path, target.name, folderOf(target.path, root), now)
-                restored++
+            runCatching {
+                val src = File(book.path)
+                if (!src.exists()) return@runCatching
+                // Free = no file there AND no other book record using that path.
+                val taken = dao.pathsStartingWith(original.substringBeforeLast('.')).toSet()
+                val target = File(TrashRules.restoreTarget(original) { File(it).exists() || it in taken })
+                if (moveFile(src, target)) {
+                    dao.markRestored(book.id, target.path, target.name, folderOf(target.path, root), now)
+                    restored++
+                }
             }
         }
         restored
@@ -95,7 +102,7 @@ class TrashRepository(
     // ------------------------------------------------------------------ internals
 
     private suspend fun <T> locked(block: suspend () -> T): T =
-        withContext(Dispatchers.IO) { mutex.withLock { block() } }
+        withContext(Dispatchers.IO) { lock.withLock { block() } }
 
     /** Rename (instant on the same storage); falls back to copy + delete across storages. */
     private fun moveFile(src: File, dest: File): Boolean {

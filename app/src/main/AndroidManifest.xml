@@ -15,6 +15,9 @@
         android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
 
+    <!-- One quiet notification when new books arrive ("12 novels added"). You can say no. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:name=".TsundokuApplication"
         android:allowBackup="false"

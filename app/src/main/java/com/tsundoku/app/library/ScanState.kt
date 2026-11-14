@@ -26,6 +26,8 @@ sealed interface ScanState {
         val broken: Int,
         val durationMs: Long,
         val folders: List<FolderCount>,
+        /** Titles of the first few new books (for the "novels added" notification). */
+        val addedTitles: List<String> = emptyList(),
     ) : ScanState
 
     data class Failed(val message: String) : ScanState

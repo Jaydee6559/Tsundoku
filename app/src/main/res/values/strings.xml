@@ -45,6 +45,14 @@
     <string name="scan_found_in">Found in</string>
     <string name="scan_skipped">Skipped: %1$s</string>
 
+    <!-- Notifications -->
+    <string name="notify_channel_name">New books</string>
+    <string name="notify_channel_desc">When new EPUBs appear on your phone</string>
+    <plurals name="notify_books_added">
+        <item quantity="one">%1$d novel added</item>
+        <item quantity="other">%1$d novels added</item>
+    </plurals>
+
     <!-- Crash report -->
     <string name="crash_title">Tsundoku closed unexpectedly</string>
     <string name="crash_body">Here\'s what went wrong last time. Copy it and send it to the developer so it can be fixed. It stays on your phone unless you share it.</string>

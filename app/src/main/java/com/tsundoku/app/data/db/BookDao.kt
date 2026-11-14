@@ -31,6 +31,10 @@ abstract class BookDao {
     )
     abstract suspend fun markRestored(id: Long, path: String, fileName: String, folder: String, now: Long)
 
+    /** Paths that begin with [prefix] (used to find a free name when restoring). */
+    @Query("SELECT path FROM books WHERE substr(path, 1, length(:prefix)) = :prefix")
+    abstract suspend fun pathsStartingWith(prefix: String): List<String>
+
     @Query("DELETE FROM books WHERE id IN (:ids)")
     abstract suspend fun deleteByIds(ids: List<Long>)
 
@@ -42,6 +46,16 @@ abstract class BookDao {
 
     @Query("SELECT * FROM books WHERE id = :id")
     abstract suspend fun getById(id: Long): BookEntity?
+
+    @Query("SELECT id, path, sizeBytes, lastModified, fingerprint, isMissing FROM books WHERE trashedAt IS NULL AND isMissing = 1")
+    abstract suspend fun missingScanRows(): List<BookScanRow>
+
+    @Query("SELECT id, path, sizeBytes, lastModified, fingerprint, isMissing FROM books WHERE trashedAt IS NULL AND path IN (:paths)")
+    abstract suspend fun scanRowsForPaths(paths: List<String>): List<BookScanRow>
+
+    /** Folders that currently hold books (watched for live updates). */
+    @Query("SELECT DISTINCT folder FROM books WHERE trashedAt IS NULL AND isMissing = 0")
+    abstract suspend fun bookFolders(): List<String>
 
     /** Trashed books are left out: their files live in a hidden folder the scan skips on purpose. */
     @Query("SELECT id, path, sizeBytes, lastModified, fingerprint, isMissing FROM books WHERE trashedAt IS NULL")

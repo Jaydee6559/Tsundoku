@@ -1,5 +1,9 @@
 package com.tsundoku.app.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,11 +16,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tsundoku.app.data.settings.AppPreferences
 import com.tsundoku.app.library.LibraryRepository
+import com.tsundoku.app.library.LiveWatcher
 import com.tsundoku.app.library.TrackingRepository
 import com.tsundoku.app.library.TrashRepository
 import com.tsundoku.app.storage.StoragePermission
@@ -35,6 +42,7 @@ fun AppRoot(
     library: LibraryRepository,
     tracking: TrackingRepository,
     trash: TrashRepository,
+    watcher: LiveWatcher,
 ) {
     val scope = rememberCoroutineScope()
     val onboardingDone by preferences.onboardingDone.collectAsStateWithLifecycle(initialValue = null)
@@ -64,10 +72,18 @@ fun AppRoot(
         )
 
         else -> {
+            val context = LocalContext.current
+            val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+                // Either answer is fine: without it, new books simply show up without a notification.
+            }
             // Quick sync on every app start: only new/changed files are read, so it's cheap.
             LaunchedEffect(Unit) {
                 library.startScan()
+                watcher.refresh() // start watching folders for instant updates
                 trash.purgeExpiredInBackground() // books in Trash for 30+ days
+                val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+                    PackageManager.PERMISSION_GRANTED
+                if (!granted) askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
             TsundokuApp(library = library, tracking = tracking, trash = trash, preferences = preferences)
         }
