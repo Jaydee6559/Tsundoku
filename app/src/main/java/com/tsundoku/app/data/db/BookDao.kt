@@ -55,6 +55,13 @@ abstract class BookDao {
     @Query("SELECT COUNT(*) FROM books WHERE trashedAt IS NULL AND isMissing = 0 AND parseError IS NOT NULL")
     abstract fun observeBrokenCount(): Flow<Int>
 
+    /**
+     * Books that point INTO Tsundoku's own hidden folder but aren't marked as trashed: duplicates
+     * an older version picked up from the Trash folder by mistake. Real trashed books are kept.
+     */
+    @Query("DELETE FROM books WHERE trashedAt IS NULL AND path LIKE '%/.tsundoku/%'")
+    abstract suspend fun deleteStrayTrashCopies(): Int
+
     @Query("DELETE FROM books WHERE id IN (:ids)")
     abstract suspend fun deleteByIds(ids: List<Long>)
 

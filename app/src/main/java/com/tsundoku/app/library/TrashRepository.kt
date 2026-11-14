@@ -79,8 +79,13 @@ class TrashRepository(
 
     /** Permanently deletes books from Trash: file, cover thumbnail and all tracking data. */
     suspend fun deleteForever(ids: Collection<Long>): Int = locked {
-        val books = dao.getByIds(ids.toList()).filter { it.trashedAt != null }
-        books.forEach { File(it.path).delete() }
+        val trashed = dao.getByIds(ids.toList()).filter { it.trashedAt != null }
+        // Only forget a book once its file is really gone. If Android refuses to delete it,
+        // it stays in Trash instead of silently lingering on storage (and coming back later).
+        val books = trashed.filter { book ->
+            val file = File(book.path)
+            !file.exists() || file.delete() || !file.exists()
+        }
         books.map { it.id }.chunked(BookDao.CHUNK).forEach { dao.deleteByIds(it) }
         books.forEach { removeUnusedThumb(it) }
         books.size

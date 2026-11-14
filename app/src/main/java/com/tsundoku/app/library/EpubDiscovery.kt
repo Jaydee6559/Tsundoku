@@ -21,7 +21,13 @@ class EpubDiscovery(private val context: Context) {
         val paths = HashSet<String>()
         paths += fromMediaStore()
         paths += fromWalk(storageRoot, excluded)
-        return paths.filterNot { FolderRules.isExcluded(folderOf(it, root), excluded) }.mapNotNull { path ->
+        return paths
+            // Never anything inside a hidden folder, above all Tsundoku's own /.tsundoku/trash.
+            // The walk already skips them, but Android's file index (MediaStore) still lists
+            // files there: a trashed book would otherwise be found again and re-added.
+            .filterNot { WatchRules.isHiddenPath(it, root) }
+            .filterNot { FolderRules.isExcluded(folderOf(it, root), excluded) }
+            .mapNotNull { path ->
             val f = File(path)
             if (f.isFile && f.length() > 0) FoundFile(f.absolutePath, f.length(), f.lastModified()) else null
         }

@@ -38,6 +38,8 @@ class LibraryScanner(
         onProgress(ScanState.Discovering)
 
         val root = discovery.storageRoot.absolutePath
+        // Remove copies of trashed books that older versions wrongly re-added from the Trash folder.
+        dao.deleteStrayTrashCopies()
         val found = discovery.findAll(excludedFolders())
         val folders = found
             .groupingBy { topFolderOf(folderOf(it.path, root)) }
@@ -65,6 +67,7 @@ class LibraryScanner(
         val excluded = excludedFolders()
         val found = paths.mapNotNull { path ->
             val f = File(path)
+            if (WatchRules.isHiddenPath(f.absolutePath, root)) return@mapNotNull null // e.g. our own Trash
             if (FolderRules.isExcluded(folderOf(f.absolutePath, root), excluded)) return@mapNotNull null
             if (f.isFile && f.length() > 0 && f.name.endsWith(".epub", ignoreCase = true)) {
                 FoundFile(f.absolutePath, f.length(), f.lastModified())
