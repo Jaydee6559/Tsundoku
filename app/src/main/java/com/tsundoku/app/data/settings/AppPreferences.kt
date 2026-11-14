@@ -20,6 +20,22 @@ import kotlinx.coroutines.flow.map
 /** App theme choice. */
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
+/** Size of book tiles in the Library (grid width / list cover size). */
+enum class TileSize { SMALL, MEDIUM, LARGE }
+
+/** How books look in the Library (Library → Display options). */
+data class LibraryDisplay(
+    val tileSize: TileSize = TileSize.MEDIUM,
+    /** Show the whole title instead of cutting it after 2 lines. */
+    val fullTitles: Boolean = false,
+    /** Author / series line under the title. */
+    val showSubtitle: Boolean = true,
+    /** Reading status (dot + label). */
+    val showStatus: Boolean = true,
+    /** Folder chip (Download, ReadEra...) in list view. */
+    val showLocation: Boolean = true,
+)
+
 /** Default folder for books added with "Share → Tsundoku". */
 const val DEFAULT_SHARE_FOLDER = "Books/Tsundoku"
 
@@ -35,6 +51,11 @@ class AppPreferences(private val context: Context) {
         val LIBRARY_FILTER = stringPreferencesKey("library_filter")
         val LIBRARY_LOCATION = stringPreferencesKey("library_location")
         val THEME = stringPreferencesKey("theme")
+        val TILE_SIZE = stringPreferencesKey("tile_size")
+        val FULL_TITLES = booleanPreferencesKey("full_titles")
+        val SHOW_SUBTITLE = booleanPreferencesKey("show_subtitle")
+        val SHOW_STATUS = booleanPreferencesKey("show_status")
+        val SHOW_LOCATION = booleanPreferencesKey("show_location")
         val AMOLED = booleanPreferencesKey("amoled")
         val EXCLUDED = stringSetPreferencesKey("excluded_folders")
         val SHARE_FOLDER = stringPreferencesKey("share_folder")
@@ -62,6 +83,28 @@ class AppPreferences(private val context: Context) {
 
     suspend fun setLibraryLocation(value: String?) {
         context.dataStore.edit { it[Keys.LIBRARY_LOCATION] = value.orEmpty() }
+    }
+
+    // ---- Library display options
+
+    val libraryDisplay: Flow<LibraryDisplay> = context.dataStore.data.map { p ->
+        LibraryDisplay(
+            tileSize = p[Keys.TILE_SIZE]?.let { n -> TileSize.entries.firstOrNull { it.name == n } } ?: TileSize.MEDIUM,
+            fullTitles = p[Keys.FULL_TITLES] ?: false,
+            showSubtitle = p[Keys.SHOW_SUBTITLE] ?: true,
+            showStatus = p[Keys.SHOW_STATUS] ?: true,
+            showLocation = p[Keys.SHOW_LOCATION] ?: true,
+        )
+    }.distinctUntilChanged()
+
+    suspend fun setLibraryDisplay(d: LibraryDisplay) {
+        context.dataStore.edit {
+            it[Keys.TILE_SIZE] = d.tileSize.name
+            it[Keys.FULL_TITLES] = d.fullTitles
+            it[Keys.SHOW_SUBTITLE] = d.showSubtitle
+            it[Keys.SHOW_STATUS] = d.showStatus
+            it[Keys.SHOW_LOCATION] = d.showLocation
+        }
     }
 
     // ---- Appearance

@@ -52,10 +52,10 @@ fun LocationMenu(
             modifier = Modifier.clickable { open = true },
         ) {
             val ink = if (selected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onSurfaceVariant
-            Row(Modifier.padding(start = 10.dp, end = 4.dp, top = 5.dp, bottom = 5.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.FolderOpen, contentDescription = null, tint = ink, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(6.dp))
-                Text(current ?: stringResource(R.string.location_all), color = ink, style = MaterialTheme.typography.labelLarge)
+            Row(Modifier.padding(start = 14.dp, end = 6.dp, top = 9.dp, bottom = 9.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Outlined.FolderOpen, contentDescription = null, tint = ink, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(current ?: stringResource(R.string.location_all), color = ink, style = MaterialTheme.typography.titleSmall)
                 Icon(Icons.Outlined.ArrowDropDown, contentDescription = stringResource(R.string.location_menu), tint = ink)
             }
         }

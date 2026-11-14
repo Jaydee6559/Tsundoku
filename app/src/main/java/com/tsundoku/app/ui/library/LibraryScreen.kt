@@ -101,6 +101,8 @@ fun LibraryScreen(
     var statusFor by remember { mutableStateOf<List<Long>?>(null) }
     var tagFor by remember { mutableStateOf<List<Long>?>(null) }
     var confirmTrash by remember { mutableStateOf<List<Long>?>(null) }
+    var showDisplay by remember { mutableStateOf(false) }
+    val display by vm.display.collectAsStateWithLifecycle()
 
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
@@ -165,7 +167,7 @@ fun LibraryScreen(
                     scanRunning = scan.isRunning,
                     onSearch = { searching = true },
                     onSort = vm::setSort,
-                    onToggleView = { vm.toggleView(state.view) },
+                    onDisplayOptions = { showDisplay = true },
                     onScan = vm::scan,
                 )
             }
@@ -194,7 +196,7 @@ fun LibraryScreen(
                 )
                 state.books.isEmpty() -> Message(null, stringResource(R.string.library_no_filter_results))
                 state.view == LibraryViewMode.GRID -> LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 100.dp),
+                    columns = GridCells.Adaptive(minSize = gridTileWidth(display.tileSize)),
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -205,6 +207,7 @@ fun LibraryScreen(
                             book = book,
                             status = state.statusOf(book.id),
                             selected = book.id in selected,
+                            display = display,
                             onClick = { onTap(book.id) },
                             onLongClick = { onLong(book.id) },
                         )
@@ -224,6 +227,7 @@ fun LibraryScreen(
                                 book = book,
                                 status = state.statusOf(book.id),
                                 selected = book.id in selected,
+                                display = display,
                                 onClick = { onTap(book.id) },
                                 onLongClick = { onLong(book.id) },
                             )
@@ -255,6 +259,15 @@ fun LibraryScreen(
             onDismiss = { tagFor = null },
         )
     }
+    if (showDisplay) {
+        DisplayOptionsDialog(
+            view = state.view,
+            display = display,
+            onView = { if (it != state.view) vm.toggleView(state.view) },
+            onDisplay = vm::setDisplay,
+            onDismiss = { showDisplay = false },
+        )
+    }
     confirmTrash?.let { ids ->
         ConfirmDialog(
             title = stringResource(R.string.select_confirm_title, ids.size),
@@ -281,7 +294,7 @@ private fun TitleBar(
     scanRunning: Boolean,
     onSearch: () -> Unit,
     onSort: (LibrarySort) -> Unit,
-    onToggleView: () -> Unit,
+    onDisplayOptions: () -> Unit,
     onScan: () -> Unit,
 ) {
     Row(
@@ -300,12 +313,11 @@ private fun TitleBar(
             Icon(Icons.Outlined.Search, contentDescription = stringResource(R.string.library_search))
         }
         SortMenu(current = sort, onSort = onSort)
-        IconButton(onClick = onToggleView) {
-            if (view == LibraryViewMode.GRID) {
-                Icon(Icons.AutoMirrored.Outlined.ViewList, contentDescription = stringResource(R.string.library_view_list))
-            } else {
-                Icon(Icons.Outlined.GridView, contentDescription = stringResource(R.string.library_view_grid))
-            }
+        IconButton(onClick = onDisplayOptions) {
+            Icon(
+                if (view == LibraryViewMode.GRID) Icons.Outlined.GridView else Icons.AutoMirrored.Outlined.ViewList,
+                contentDescription = stringResource(R.string.display_title),
+            )
         }
         if (scanRunning) {
             Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
@@ -396,14 +408,21 @@ private fun FilterRow(filter: LibraryFilter, counts: Map<LibraryFilter, Int>, on
     val visible = LibraryFilter.entries.filter { it == LibraryFilter.ALL || it == filter || (counts[it] ?: 0) > 0 }
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(visible) { option ->
             val selected = option == filter
             FilterChip(
                 selected = selected,
                 onClick = { onFilter(option) },
-                label = { Text(stringResource(option.label(), counts[option] ?: 0)) },
+                label = {
+                    Text(
+                        stringResource(option.label(), counts[option] ?: 0),
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(horizontal = 4.dp),
+                    )
+                },
+                modifier = Modifier.height(40.dp),
                 shape = MaterialTheme.shapes.large,
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = MaterialTheme.colorScheme.onBackground,

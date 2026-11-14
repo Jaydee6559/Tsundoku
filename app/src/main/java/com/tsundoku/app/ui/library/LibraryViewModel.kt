@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.tsundoku.app.data.db.BookEntity
 import com.tsundoku.app.data.db.ReadingStatus
 import com.tsundoku.app.data.settings.AppPreferences
+import com.tsundoku.app.data.settings.LibraryDisplay
 import com.tsundoku.app.library.LibraryFilter
 import com.tsundoku.app.library.LibraryQuery
 import com.tsundoku.app.library.LibraryRepository
@@ -135,6 +136,14 @@ class LibraryViewModel(
 
     fun setFilter(filter: LibraryFilter) {
         viewModelScope.launch { preferences.setLibraryFilter(filter) }
+    }
+
+    /** How tiles look (size, full titles, which details show). */
+    val display: StateFlow<LibraryDisplay> =
+        preferences.libraryDisplay.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LibraryDisplay())
+
+    fun setDisplay(display: LibraryDisplay) {
+        viewModelScope.launch { preferences.setLibraryDisplay(display) }
     }
 
     fun setLocation(location: String?) {

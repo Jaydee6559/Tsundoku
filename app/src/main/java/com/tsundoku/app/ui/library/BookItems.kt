@@ -28,11 +28,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tsundoku.app.R
 import com.tsundoku.app.data.db.BookEntity
 import com.tsundoku.app.data.db.ReadingStatus
+import com.tsundoku.app.data.settings.LibraryDisplay
+import com.tsundoku.app.data.settings.TileSize
 import com.tsundoku.app.library.LibraryQuery
 import com.tsundoku.app.ui.components.StatusDotLabel
 import com.tsundoku.app.ui.components.CoverImage
@@ -45,10 +49,12 @@ fun BookGridItem(
     book: BookEntity,
     status: ReadingStatus,
     selected: Boolean,
+    display: LibraryDisplay,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val text = gridText(display.tileSize)
     Column(modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick)) {
         Box {
             CoverImage(
@@ -63,25 +69,29 @@ fun BookGridItem(
         Spacer(Modifier.height(6.dp))
         Text(
             book.title,
-            fontSize = 12.sp,
-            lineHeight = 15.sp,
+            fontSize = text.title,
+            lineHeight = text.titleLine,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 2,
+            maxLines = if (display.fullTitles) Int.MAX_VALUE else 2,
             overflow = TextOverflow.Ellipsis,
         )
         val line = seriesLabel(book) ?: book.authors
-        if (line != null) {
+        if (display.showSubtitle && line != null) {
             Text(
                 line,
-                fontSize = 11.sp,
-                lineHeight = 14.sp,
+                fontSize = text.sub,
+                lineHeight = text.subLine,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
+                maxLines = if (display.fullTitles) 2 else 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        if (book.parseError != null) BrokenLabel() else StatusDotLabel(status, Modifier.padding(top = 2.dp))
+        if (book.parseError != null) {
+            BrokenLabel()
+        } else if (display.showStatus) {
+            StatusDotLabel(status, Modifier.padding(top = 2.dp))
+        }
     }
 }
 
@@ -92,10 +102,12 @@ fun BookListRow(
     book: BookEntity,
     status: ReadingStatus,
     selected: Boolean,
+    display: LibraryDisplay,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val (coverW, coverH) = listCover(display.tileSize)
     Row(
         modifier
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
@@ -107,7 +119,7 @@ fun BookListRow(
             CoverImage(
                 thumbPath = book.coverThumbPath,
                 title = book.title,
-                modifier = Modifier.size(width = 42.dp, height = 62.dp),
+                modifier = Modifier.size(width = coverW, height = coverH),
             )
             if (selected) SelectedMark(Modifier.align(Alignment.Center))
         }
@@ -115,13 +127,13 @@ fun BookListRow(
         Column(Modifier.weight(1f)) {
             Text(
                 book.title,
-                style = MaterialTheme.typography.titleSmall,
+                style = if (display.tileSize == TileSize.SMALL) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
+                maxLines = if (display.fullTitles) Int.MAX_VALUE else 2,
                 overflow = TextOverflow.Ellipsis,
             )
             val subtitle = listOfNotNull(book.authors, seriesLabel(book)).joinToString(" · ")
-            if (subtitle.isNotEmpty()) {
+            if (display.showSubtitle && subtitle.isNotEmpty()) {
                 Text(
                     subtitle,
                     style = MaterialTheme.typography.bodySmall,
@@ -130,11 +142,38 @@ fun BookListRow(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            if (book.parseError != null) BrokenLabel() else StatusDotLabel(status, Modifier.padding(top = 3.dp))
+            if (book.parseError != null) {
+                BrokenLabel()
+            } else if (display.showStatus) {
+                StatusDotLabel(status, Modifier.padding(top = 3.dp))
+            }
         }
-        Spacer(Modifier.width(8.dp))
-        LocationChip(book.folder)
+        if (display.showLocation) {
+            Spacer(Modifier.width(8.dp))
+            LocationChip(book.folder)
+        }
     }
+}
+
+/** Grid column width for each tile size (the grid fits as many columns as it can). */
+fun gridTileWidth(size: TileSize) = when (size) {
+    TileSize.SMALL -> 96.dp
+    TileSize.MEDIUM -> 128.dp
+    TileSize.LARGE -> 170.dp
+}
+
+private data class GridText(val title: TextUnit, val titleLine: TextUnit, val sub: TextUnit, val subLine: TextUnit)
+
+private fun gridText(size: TileSize) = when (size) {
+    TileSize.SMALL -> GridText(12.sp, 15.sp, 11.sp, 14.sp)
+    TileSize.MEDIUM -> GridText(14.sp, 18.sp, 12.sp, 16.sp)
+    TileSize.LARGE -> GridText(16.sp, 20.sp, 13.sp, 17.sp)
+}
+
+private fun listCover(size: TileSize): Pair<Dp, Dp> = when (size) {
+    TileSize.SMALL -> 36.dp to 54.dp
+    TileSize.MEDIUM -> 50.dp to 75.dp
+    TileSize.LARGE -> 66.dp to 99.dp
 }
 
 /** Check mark on a selected book. */
