@@ -14,7 +14,7 @@ class MainActivity : ComponentActivity() {
         val container = (application as TsundokuApplication).container
         setContent {
             TsundokuTheme {
-                AppRoot(preferences = container.preferences)
+                AppRoot(preferences = container.preferences, library = container.library)
             }
         }
     }

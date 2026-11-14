@@ -15,22 +15,27 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import com.tsundoku.app.library.ScanState
 import com.tsundoku.app.storage.StoragePermission
 
-enum class OnboardingStep { WELCOME, PERMISSION, READY }
+enum class OnboardingStep { WELCOME, PERMISSION, SCAN }
 
 /**
- * First-launch flow: Welcome -> All files access -> Ready.
+ * First-launch flow: Welcome -> All files access -> first scan.
  *
  * @param onboardingDone true when the user finished onboarding before (then only the permission
  *   step is shown, e.g. if they turned the permission off later).
  * @param permissionGranted current All files access state (re-checked by the caller on every resume).
+ * @param scanState live progress of the library scan.
+ * @param onStartScan starts the first scan.
  * @param onFinished called when the user taps "Open library".
  */
 @Composable
 fun OnboardingFlow(
     onboardingDone: Boolean,
     permissionGranted: Boolean,
+    scanState: ScanState,
+    onStartScan: () -> Unit,
     onFinished: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -43,7 +48,7 @@ fun OnboardingFlow(
     // Move on automatically as soon as the permission is on.
     LaunchedEffect(permissionGranted, step) {
         if (permissionGranted && step == OnboardingStep.PERMISSION) {
-            step = OnboardingStep.READY
+            step = OnboardingStep.SCAN
         }
     }
 
@@ -66,7 +71,11 @@ fun OnboardingFlow(
                         StoragePermission.openSettings(context)
                     },
                 )
-                OnboardingStep.READY -> ReadyScreen(onOpenLibrary = onFinished)
+                OnboardingStep.SCAN -> FirstScanScreen(
+                    scanState = scanState,
+                    onStartScan = onStartScan,
+                    onOpenLibrary = onFinished,
+                )
             }
         }
     }

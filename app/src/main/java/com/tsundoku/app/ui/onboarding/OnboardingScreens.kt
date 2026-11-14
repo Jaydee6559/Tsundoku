@@ -17,7 +17,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.Lock
@@ -136,49 +135,10 @@ fun PermissionScreen(
     }
 }
 
-@Composable
-fun ReadyScreen(onOpenLibrary: () -> Unit) {
-    OnboardingScaffold(
-        top = { StepHeader(label = stringResource(R.string.onb_step_2), showBack = false, onBack = {}) },
-        bottom = { PrimaryButton(text = stringResource(R.string.onb_open_library), onClick = onOpenLibrary) },
-    ) {
-        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
-            IconBadge(Icons.Outlined.CheckCircle, sage = true)
-            Spacer(Modifier.height(20.dp))
-            Text(
-                text = stringResource(R.string.onb_ready_title),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            Spacer(Modifier.height(12.dp))
-            Text(
-                text = stringResource(R.string.onb_ready_body),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(16.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Outlined.CheckCircle,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.onb_granted),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                )
-            }
-        }
-    }
-}
-
 // ---------------------------------------------------------------- building blocks
 
 @Composable
-private fun OnboardingScaffold(
+internal fun OnboardingScaffold(
     top: @Composable () -> Unit = {},
     bottom: @Composable () -> Unit,
     content: @Composable () -> Unit,
@@ -201,7 +161,7 @@ private fun OnboardingScaffold(
 }
 
 @Composable
-private fun StepHeader(label: String, showBack: Boolean, onBack: () -> Unit) {
+internal fun StepHeader(label: String, showBack: Boolean, onBack: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -219,7 +179,7 @@ private fun StepHeader(label: String, showBack: Boolean, onBack: () -> Unit) {
 }
 
 @Composable
-private fun PrimaryButton(text: String, onClick: () -> Unit) {
+internal fun PrimaryButton(text: String, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         shape = MaterialTheme.shapes.large,
@@ -269,6 +229,3 @@ private fun PermissionPreview() = TsundokuTheme {
     PermissionScreen(showBack = true, askedOnce = true, onBack = {}, onAllow = {})
 }
 
-@Preview(showBackground = true)
-@Composable
-private fun ReadyPreview() = TsundokuTheme { ReadyScreen(onOpenLibrary = {}) }

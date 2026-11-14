@@ -32,8 +32,25 @@
     <string name="onb_allow_again">Open settings again</string>
     <string name="onb_allow_hint">Opens Android settings. Turn on Tsundoku, then come back.</string>
     <string name="onb_not_yet">Access isn\'t on yet. Turn on \"Allow access to manage all files\" for Tsundoku.</string>
-    <string name="onb_ready_title">You\'re all set</string>
-    <string name="onb_ready_body">Tsundoku can now see your EPUBs. Scanning your library arrives in the next update.</string>
     <string name="onb_open_library">Open library</string>
-    <string name="onb_granted">All files access is on</string>
+
+    <!-- First scan -->
+    <string name="scan_title">Building your library</string>
+    <string name="scan_subtitle">Reading titles and covers. Books appear as they\'re found.</string>
+    <string name="scan_epubs_found">EPUBs found</string>
+    <string name="scan_looking">Looking for EPUBs…</string>
+    <string name="scan_reading">Reading covers…</string>
+    <string name="scan_done">Done</string>
+    <string name="scan_failed">The scan stopped: %1$s</string>
+    <string name="scan_found_in">Found in</string>
+    <string name="scan_skipped">Skipped: %1$s</string>
+
+    <!-- Library -->
+    <string name="library_scan_now">Scan now</string>
+    <string name="library_summary">%1$d books · %2$s</string>
+    <string name="library_empty_title">No books yet</string>
+    <string name="library_empty_body">Tap scan to look for EPUBs on your phone.</string>
+    <string name="library_broken">Couldn\'t read details</string>
+    <string name="library_vol">Vol %1$s</string>
+    <string name="library_last_scan">Added %1$d · updated %2$d · moved %3$d · missing %4$d</string>
 </resources>

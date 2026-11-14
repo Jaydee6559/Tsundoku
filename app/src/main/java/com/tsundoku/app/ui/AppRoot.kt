@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -15,6 +16,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tsundoku.app.data.settings.AppPreferences
+import com.tsundoku.app.library.LibraryRepository
 import com.tsundoku.app.storage.StoragePermission
 import com.tsundoku.app.ui.onboarding.OnboardingFlow
 import kotlinx.coroutines.launch
@@ -26,9 +28,10 @@ import kotlinx.coroutines.launch
  *  - otherwise the main app.
  */
 @Composable
-fun AppRoot(preferences: AppPreferences) {
+fun AppRoot(preferences: AppPreferences, library: LibraryRepository) {
     val scope = rememberCoroutineScope()
     val onboardingDone by preferences.onboardingDone.collectAsStateWithLifecycle(initialValue = null)
+    val scanState by library.scanState.collectAsStateWithLifecycle()
 
     // Re-check every time the app comes back to the front (e.g. returning from Android settings).
     var permissionGranted by remember { mutableStateOf(StoragePermission.isGranted()) }
@@ -48,9 +51,15 @@ fun AppRoot(preferences: AppPreferences) {
         !done || !permissionGranted -> OnboardingFlow(
             onboardingDone = done,
             permissionGranted = permissionGranted,
+            scanState = scanState,
+            onStartScan = library::startScan,
             onFinished = { scope.launch { preferences.setOnboardingDone(true) } },
         )
 
-        else -> TsundokuApp()
+        else -> {
+            // Quick sync on every app start: only new/changed files are read, so it's cheap.
+            LaunchedEffect(Unit) { library.startScan() }
+            TsundokuApp(library = library)
+        }
     }
 }
