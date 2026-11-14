@@ -59,7 +59,7 @@ fun AppRoot(preferences: AppPreferences, library: LibraryRepository) {
         else -> {
             // Quick sync on every app start: only new/changed files are read, so it's cheap.
             LaunchedEffect(Unit) { library.startScan() }
-            TsundokuApp(library = library)
+            TsundokuApp(library = library, preferences = preferences)
         }
     }
 }

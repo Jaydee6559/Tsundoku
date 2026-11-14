@@ -19,6 +19,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.tsundoku.app.R
+import com.tsundoku.app.data.settings.AppPreferences
 import com.tsundoku.app.library.LibraryRepository
 import com.tsundoku.app.ui.library.LibraryScreen
 import com.tsundoku.app.ui.navigation.TopLevelDestination
@@ -26,7 +27,7 @@ import com.tsundoku.app.ui.screens.HomeScreen
 import com.tsundoku.app.ui.screens.PlaceholderScreen
 
 @Composable
-fun TsundokuApp(library: LibraryRepository) {
+fun TsundokuApp(library: LibraryRepository, preferences: AppPreferences) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
@@ -72,7 +73,7 @@ fun TsundokuApp(library: LibraryRepository) {
             modifier = Modifier.padding(innerPadding),
         ) {
             composable(TopLevelDestination.HOME.route) { HomeScreen() }
-            composable(TopLevelDestination.LIBRARY.route) { LibraryScreen(library) }
+            composable(TopLevelDestination.LIBRARY.route) { LibraryScreen(library, preferences) }
             composable(TopLevelDestination.SERIES.route) {
                 PlaceholderScreen(R.string.tab_series, R.string.placeholder_series)
             }
