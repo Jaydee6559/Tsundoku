@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
@@ -26,8 +27,16 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** Small in-memory cache so scrolling back doesn't re-read thumbnails from disk. */
-private val thumbCache = LruCache<String, ImageBitmap>(300)
+/**
+ * In-memory cache so scrolling back doesn't re-read thumbnails from disk.
+ * Limited by MEMORY (1/8 of the app's allowance), not by count: hundreds of covers
+ * held at once could otherwise run the app out of memory.
+ */
+private val thumbCache = object : LruCache<String, ImageBitmap>(
+    (Runtime.getRuntime().maxMemory() / 8).coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+) {
+    override fun sizeOf(key: String, value: ImageBitmap): Int = value.asAndroidBitmap().byteCount
+}
 
 /** Muted cover colors (Paper and ink) for books without a cover image. */
 private val PLACEHOLDER_COLORS = listOf(
@@ -44,7 +53,12 @@ fun CoverImage(thumbPath: String?, title: String, modifier: Modifier = Modifier)
     val bitmap by produceState(initialValue = thumbPath?.let { thumbCache.get(it) }, key1 = thumbPath) {
         if (thumbPath != null && value == null) {
             value = withContext(Dispatchers.IO) {
-                runCatching { BitmapFactory.decodeFile(thumbPath)?.asImageBitmap() }.getOrNull()
+                // Catches everything, including OutOfMemoryError: a bad image shows the placeholder instead.
+                try {
+                    BitmapFactory.decodeFile(thumbPath)?.asImageBitmap()
+                } catch (t: Throwable) {
+                    null
+                }
             }?.also { thumbCache.put(thumbPath, it) }
         }
     }

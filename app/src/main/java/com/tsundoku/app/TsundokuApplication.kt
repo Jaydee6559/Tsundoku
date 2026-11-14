@@ -3,6 +3,7 @@ package com.tsundoku.app
 import android.app.Application
 import com.tsundoku.app.data.db.TsundokuDatabase
 import com.tsundoku.app.data.settings.AppPreferences
+import com.tsundoku.app.diagnostics.CrashLog
 import com.tsundoku.app.library.EpubDiscovery
 import com.tsundoku.app.library.LibraryRepository
 import com.tsundoku.app.library.LibraryScanner
@@ -20,6 +21,7 @@ class TsundokuApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        CrashLog.install(this) // first, so even startup crashes are recorded
         container = AppContainer(this)
     }
 }

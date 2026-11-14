@@ -35,8 +35,9 @@ class LibraryRepository(
                 scanner.scan { _scanState.value = it }
             } catch (e: CancellationException) {
                 throw e
-            } catch (e: Exception) {
-                _scanState.value = ScanState.Failed(e.message ?: e.javaClass.simpleName)
+            } catch (t: Throwable) {
+                // Never let a scan problem close the app; show it on screen instead.
+                _scanState.value = ScanState.Failed(t.message ?: t.javaClass.simpleName)
             } finally {
                 scanning.set(false)
             }
