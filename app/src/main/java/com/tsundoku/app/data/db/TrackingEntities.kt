@@ -65,3 +65,6 @@ data class StatusEventEntity(
     val status: ReadingStatus,
     val at: Long,
 )
+
+/** A book id with one of its tag names (for backups). */
+data class BookTagName(val bookId: Long, val name: String)

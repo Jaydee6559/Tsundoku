@@ -11,6 +11,7 @@ import com.tsundoku.app.library.ScanState
 import com.tsundoku.app.library.SeriesRepository
 import com.tsundoku.app.library.UpNextRepository
 import com.tsundoku.app.data.db.BookDao
+import com.tsundoku.app.backup.BackupManager
 import com.tsundoku.app.library.LibraryScanner
 import com.tsundoku.app.library.TrackingRepository
 import com.tsundoku.app.library.TrashRepository
@@ -58,6 +59,7 @@ class AppContainer(application: Application) {
                 discovery = EpubDiscovery(application),
                 dao = database.bookDao(),
                 coversDir = File(application.filesDir, "covers"),
+                excludedFolders = { preferences.excludedFoldersNow() },
             ),
             scope = appScope,
             lock = libraryLock,
@@ -82,6 +84,10 @@ class AppContainer(application: Application) {
 
     val bookDao: BookDao get() = database.bookDao()
 
+    val backup: BackupManager by lazy {
+        BackupManager(application, database, preferences, storageRoot = { Environment.getExternalStorageDirectory() })
+    }
+
     val notifier: NewBooksNotifier by lazy { NewBooksNotifier(application) }
 
     /** Instant updates for folders that hold books (and common download folders). */
@@ -91,6 +97,7 @@ class AppContainer(application: Application) {
             storageRoot = { Environment.getExternalStorageDirectory() },
             bookFolders = { root -> library.bookFolders(root) },
             onChanges = { paths -> library.syncPaths(paths) },
+            excluded = { preferences.excludedFoldersNow() },
         )
     }
 

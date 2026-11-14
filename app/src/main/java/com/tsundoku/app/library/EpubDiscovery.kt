@@ -15,11 +15,13 @@ class EpubDiscovery(private val context: Context) {
 
     val storageRoot: File get() = Environment.getExternalStorageDirectory()
 
-    fun findAll(): List<FoundFile> {
+    /** @param excluded folders you chose to ignore (relative paths), skipped with everything inside. */
+    fun findAll(excluded: Set<String> = emptySet()): List<FoundFile> {
+        val root = storageRoot.absolutePath
         val paths = HashSet<String>()
         paths += fromMediaStore()
-        paths += fromWalk(storageRoot)
-        return paths.mapNotNull { path ->
+        paths += fromWalk(storageRoot, excluded)
+        return paths.filterNot { FolderRules.isExcluded(folderOf(it, root), excluded) }.mapNotNull { path ->
             val f = File(path)
             if (f.isFile && f.length() > 0) FoundFile(f.absolutePath, f.length(), f.lastModified()) else null
         }
@@ -41,7 +43,7 @@ class EpubDiscovery(private val context: Context) {
         out
     }.getOrDefault(emptyList())
 
-    private fun fromWalk(root: File): List<String> {
+    private fun fromWalk(root: File, excluded: Set<String>): List<String> {
         val out = mutableListOf<String>()
         val rootPath = root.absolutePath
         val stack = ArrayDeque<Pair<File, Int>>().apply { addLast(root to 0) }
@@ -50,7 +52,7 @@ class EpubDiscovery(private val context: Context) {
             val children = dir.listFiles() ?: continue
             for (child in children) {
                 if (child.isDirectory) {
-                    if (depth < MAX_DEPTH && !shouldSkip(child, rootPath)) stack.addLast(child to depth + 1)
+                    if (depth < MAX_DEPTH && !shouldSkip(child, rootPath, excluded)) stack.addLast(child to depth + 1)
                 } else if (child.name.endsWith(".epub", ignoreCase = true)) {
                     out += child.absolutePath
                 }
@@ -59,12 +61,12 @@ class EpubDiscovery(private val context: Context) {
         return out
     }
 
-    private fun shouldSkip(dir: File, rootPath: String): Boolean {
+    private fun shouldSkip(dir: File, rootPath: String, excluded: Set<String>): Boolean {
         val name = dir.name
         if (name.startsWith(".")) return true // hidden folders, incl. Tsundoku's own /.tsundoku
         if (name in SKIP_ANYWHERE) return true
         val relative = dir.absolutePath.removePrefix(rootPath).trimStart('/')
-        return relative in SKIP_FROM_ROOT
+        return relative in SKIP_FROM_ROOT || FolderRules.isExcluded(relative, excluded)
     }
 
     companion object {

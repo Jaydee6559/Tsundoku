@@ -26,6 +26,8 @@ class LibraryScanner(
     private val discovery: EpubDiscovery,
     private val dao: BookDao,
     private val coversDir: File,
+    /** Folders you chose to ignore (Settings → Excluded folders). Books there count as missing. */
+    private val excludedFolders: suspend () -> Set<String> = { emptySet() },
 ) {
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -36,7 +38,7 @@ class LibraryScanner(
         onProgress(ScanState.Discovering)
 
         val root = discovery.storageRoot.absolutePath
-        val found = discovery.findAll()
+        val found = discovery.findAll(excludedFolders())
         val folders = found
             .groupingBy { topFolderOf(folderOf(it.path, root)) }
             .eachCount()
@@ -54,8 +56,10 @@ class LibraryScanner(
     suspend fun syncPaths(paths: Set<String>): ScanState.Done = withContext(Dispatchers.IO) {
         val started = System.currentTimeMillis()
         val root = discovery.storageRoot.absolutePath
+        val excluded = excludedFolders()
         val found = paths.mapNotNull { path ->
             val f = File(path)
+            if (FolderRules.isExcluded(folderOf(f.absolutePath, root), excluded)) return@mapNotNull null
             if (f.isFile && f.length() > 0 && f.name.endsWith(".epub", ignoreCase = true)) {
                 FoundFile(f.absolutePath, f.length(), f.lastModified())
             } else {

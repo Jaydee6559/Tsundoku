@@ -9,6 +9,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import com.tsundoku.app.diagnostics.CrashLog
+import com.tsundoku.app.data.settings.ThemeMode
+import com.tsundoku.app.ui.theme.isDark
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tsundoku.app.notifications.AppVisibility
 import com.tsundoku.app.ui.AppRoot
 import com.tsundoku.app.ui.components.CrashReportDialog
@@ -21,7 +24,9 @@ class MainActivity : ComponentActivity() {
         val container = (application as TsundokuApplication).container
         val lastCrash = CrashLog.read(this)
         setContent {
-            TsundokuTheme {
+            val themeMode by container.preferences.themeMode.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
+            val amoled by container.preferences.amoled.collectAsStateWithLifecycle(initialValue = false)
+            TsundokuTheme(darkTheme = themeMode.isDark(), amoledBlack = amoled) {
                 AppRoot(
                     preferences = container.preferences,
                     library = container.library,
@@ -30,6 +35,7 @@ class MainActivity : ComponentActivity() {
                     series = container.series,
                     upNext = container.upNext,
                     watcher = container.watcher,
+                    container = container,
                 )
 
                 var crashReport by rememberSaveable { mutableStateOf(lastCrash) }

@@ -5,6 +5,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.tsundoku.app.library.LibraryFilter
@@ -12,7 +14,14 @@ import com.tsundoku.app.library.LibrarySort
 import com.tsundoku.app.library.LibraryViewMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+
+/** App theme choice. */
+enum class ThemeMode { SYSTEM, LIGHT, DARK }
+
+/** Default folder for books added with "Share → Tsundoku". */
+const val DEFAULT_SHARE_FOLDER = "Books/Tsundoku"
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "tsundoku_prefs")
 
@@ -25,6 +34,12 @@ class AppPreferences(private val context: Context) {
         val LIBRARY_SORT = stringPreferencesKey("library_sort")
         val LIBRARY_FILTER = stringPreferencesKey("library_filter")
         val LIBRARY_LOCATION = stringPreferencesKey("library_location")
+        val THEME = stringPreferencesKey("theme")
+        val AMOLED = booleanPreferencesKey("amoled")
+        val EXCLUDED = stringSetPreferencesKey("excluded_folders")
+        val SHARE_FOLDER = stringPreferencesKey("share_folder")
+        val AUTO_BACKUP = booleanPreferencesKey("auto_backup")
+        val LAST_BACKUP = longPreferencesKey("last_backup_at")
     }
 
     /** True once the user has finished the first-launch flow. */
@@ -47,6 +62,54 @@ class AppPreferences(private val context: Context) {
 
     suspend fun setLibraryLocation(value: String?) {
         context.dataStore.edit { it[Keys.LIBRARY_LOCATION] = value.orEmpty() }
+    }
+
+    // ---- Appearance
+
+    val themeMode: Flow<ThemeMode> = enumFlow(Keys.THEME, ThemeMode.SYSTEM)
+    val amoled: Flow<Boolean> = context.dataStore.data.map { it[Keys.AMOLED] ?: false }.distinctUntilChanged()
+
+    suspend fun setThemeMode(value: ThemeMode) = setEnum(Keys.THEME, value)
+    suspend fun setAmoled(value: Boolean) {
+        context.dataStore.edit { it[Keys.AMOLED] = value }
+    }
+
+    // ---- Folders (paths relative to internal storage, e.g. "Download/Manga")
+
+    /** Folders (and everything inside) the scanner and watcher ignore. */
+    val excludedFolders: Flow<Set<String>> =
+        context.dataStore.data.map { it[Keys.EXCLUDED] ?: emptySet() }.distinctUntilChanged()
+
+    suspend fun excludedFoldersNow(): Set<String> = excludedFolders.first()
+
+    suspend fun addExcludedFolder(folder: String) {
+        val clean = folder.trim('/')
+        if (clean.isEmpty()) return // never exclude the whole storage
+        context.dataStore.edit { it[Keys.EXCLUDED] = (it[Keys.EXCLUDED] ?: emptySet()) + clean }
+    }
+
+    suspend fun removeExcludedFolder(folder: String) {
+        context.dataStore.edit { it[Keys.EXCLUDED] = (it[Keys.EXCLUDED] ?: emptySet()) - folder }
+    }
+
+    val shareFolder: Flow<String> =
+        context.dataStore.data.map { it[Keys.SHARE_FOLDER] ?: DEFAULT_SHARE_FOLDER }.distinctUntilChanged()
+
+    suspend fun setShareFolder(folder: String) {
+        context.dataStore.edit { it[Keys.SHARE_FOLDER] = folder.trim('/').ifEmpty { DEFAULT_SHARE_FOLDER } }
+    }
+
+    // ---- Backups
+
+    val autoBackup: Flow<Boolean> = context.dataStore.data.map { it[Keys.AUTO_BACKUP] ?: true }.distinctUntilChanged()
+    val lastBackupAt: Flow<Long> = context.dataStore.data.map { it[Keys.LAST_BACKUP] ?: 0L }.distinctUntilChanged()
+
+    suspend fun setAutoBackup(value: Boolean) {
+        context.dataStore.edit { it[Keys.AUTO_BACKUP] = value }
+    }
+
+    suspend fun setLastBackupAt(value: Long) {
+        context.dataStore.edit { it[Keys.LAST_BACKUP] = value }
     }
 
     suspend fun setLibraryView(value: LibraryViewMode) = setEnum(Keys.LIBRARY_VIEW, value)

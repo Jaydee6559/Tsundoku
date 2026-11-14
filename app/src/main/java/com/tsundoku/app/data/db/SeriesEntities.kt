@@ -30,6 +30,9 @@ interface SeriesDao {
     @Upsert
     suspend fun upsert(info: SeriesInfoEntity)
 
+    @Query("SELECT * FROM series_info")
+    suspend fun getAll(): List<SeriesInfoEntity>
+
     @Query("DELETE FROM series_info WHERE seriesKey = :key")
     suspend fun delete(key: String)
 }

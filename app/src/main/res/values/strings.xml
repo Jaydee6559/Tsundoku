@@ -237,5 +237,60 @@
     <string name="settings_trash_sub">%1$d books · auto-delete after 30 days</string>
     <string name="settings_scan">Scan now</string>
     <string name="settings_scan_sub">Look for new, moved or deleted EPUBs</string>
-    <string name="settings_more_soon">Theme, folders, backups and more arrive in a later update.</string>
+    <string name="settings_section_library">Library</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_backup">Backup</string>
+    <string name="settings_section_more">More</string>
+    <string name="settings_excluded">Excluded folders</string>
+    <string name="settings_excluded_sub">%1$d folders ignored</string>
+    <string name="settings_share_folder">Shared books folder</string>
+    <string name="settings_status">Scanner status</string>
+    <string name="settings_status_sub">Counts, watched folders, last scan</string>
+    <string name="settings_theme">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_amoled">AMOLED black</string>
+    <string name="settings_amoled_sub">Pure black in dark mode</string>
+    <string name="settings_auto_backup">Daily auto backup</string>
+    <string name="settings_auto_backup_sub">Keeps the last 7 · /.tsundoku/backup</string>
+    <string name="settings_backup_now">Back up now</string>
+    <string name="settings_last_backup">Last backup: %1$s</string>
+    <string name="settings_never">never</string>
+    <string name="settings_restore">Restore a backup</string>
+    <string name="settings_restore_sub">Statuses, progress, notes, tags, Up next, series</string>
+    <string name="settings_about">Tsundoku %1$s · no internet access, your data stays on this phone</string>
+    <string name="backup_saved">Backup saved</string>
+    <string name="backup_failed">Couldn\'t save the backup</string>
+    <string name="pick_folder_unsupported">Only folders on internal storage can be used.</string>
+
+    <!-- Excluded folders -->
+    <string name="excluded_title">Excluded folders</string>
+    <string name="excluded_body">Books in these folders (and folders inside them) are left out of your library. Remove a folder to bring its books back.</string>
+    <string name="excluded_add">Add folder</string>
+    <string name="excluded_remove">Stop excluding %1$s</string>
+    <string name="excluded_empty">No folders excluded.</string>
+
+    <!-- Restore -->
+    <string name="restore_title">Restore a backup</string>
+    <string name="restore_body">Restoring puts your saved reading data back onto the books on this phone. Books are matched even if they were moved or renamed. Current data for those books is replaced.</string>
+    <string name="restore_from_file">Choose a file…</string>
+    <string name="restore_none">No backups yet.</string>
+    <string name="restore_confirm_title">Restore this backup?</string>
+    <string name="restore_confirm_body">Reading data for matching books will be replaced with the backup\'s.</string>
+    <string name="restore_action">Restore</string>
+    <string name="restore_done">Restored %1$d books · %2$d not on this phone</string>
+    <string name="restore_failed">Couldn\'t restore: %1$s</string>
+
+    <!-- Scanner status -->
+    <string name="status_title">Scanner status</string>
+    <string name="status_books">Books</string>
+    <string name="status_broken">Broken files</string>
+    <string name="status_missing">Missing</string>
+    <string name="status_watched">Folders watched</string>
+    <string name="status_last_scan">Last full scan</string>
+    <string name="status_last_scan_value">%1$s · %2$d found · %3$.1f s</string>
+    <string name="status_last_scan_none">Not yet in this session</string>
+    <string name="status_last_changes">Added %1$d · updated %2$d · moved %3$d · missing %4$d · broken %5$d</string>
+    <string name="status_background">Background sync runs about every 6 hours, when the battery isn\'t low.</string>
 </resources>

@@ -23,7 +23,11 @@ class LiveWatcher(
     private val storageRoot: () -> File,
     private val bookFolders: suspend (root: String) -> List<String>,
     private val onChanges: suspend (Set<String>) -> Unit,
+    private val excluded: suspend () -> Set<String> = { emptySet() },
 ) {
+    /** How many folders are being watched right now (shown on the Scanner status screen). */
+    private val _watchedCount = kotlinx.coroutines.flow.MutableStateFlow(0)
+    val watchedCount: kotlinx.coroutines.flow.StateFlow<Int> = _watchedCount
     private val observers = mutableListOf<FileObserver>()
     private val pending = LinkedHashSet<String>()
     private val pendingLock = Any()
@@ -35,14 +39,17 @@ class LiveWatcher(
         scope.launch {
             restartLock.withLock {
                 val root = storageRoot().absolutePath
+                val skip = excluded()
                 val folders = (bookFolders(root) + DEFAULT_FOLDERS.map { "$root/$it" })
                     .map { File(it) }
                     .filter { it.isDirectory && !WatchRules.isHiddenPath(it.absolutePath, root) }
+                    .filterNot { FolderRules.isExcluded(it.absolutePath.removePrefix(root).trim('/'), skip) }
                     .distinctBy { it.absolutePath }
                     .take(MAX_FOLDERS)
 
                 stopObservers()
                 folders.forEach { dir -> observers += observerFor(dir).also { it.startWatching() } }
+                _watchedCount.value = observers.size
             }
         }
     }

@@ -23,6 +23,7 @@ class LibrarySyncWorker(context: Context, params: WorkerParameters) : CoroutineW
         val container = (applicationContext as TsundokuApplication).container
         container.library.scanQuietly() // result goes to the notifier via LibraryRepository.quietResults
         container.trash.purgeExpiredInBackground()
+        runCatching { container.backup.backupIfDue() }
         return Result.success()
     }
 

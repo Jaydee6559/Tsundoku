@@ -31,6 +31,10 @@ import com.tsundoku.app.ui.home.UpNextScreen
 import com.tsundoku.app.ui.series.SeriesDetailScreen
 import com.tsundoku.app.ui.series.SeriesListScreen
 import android.net.Uri
+import com.tsundoku.app.AppContainer
+import com.tsundoku.app.ui.settings.ExcludedFoldersScreen
+import com.tsundoku.app.ui.settings.RestoreScreen
+import com.tsundoku.app.ui.settings.ScannerStatusScreen
 import com.tsundoku.app.ui.settings.SettingsScreen
 import com.tsundoku.app.ui.trash.TrashScreen
 import com.tsundoku.app.ui.book.BookDetailScreen
@@ -45,12 +49,13 @@ fun TsundokuApp(
     series: SeriesRepository,
     upNext: UpNextRepository,
     preferences: AppPreferences,
+    container: AppContainer,
 ) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     // Full-height screens: no bottom bar there.
-    val showBottomBar = currentDestination?.route !in setOf(BOOK_ROUTE, TRASH_ROUTE, SERIES_ROUTE, UP_NEXT_ROUTE)
+    val showBottomBar = currentDestination?.route !in setOf(BOOK_ROUTE, TRASH_ROUTE, SERIES_ROUTE, UP_NEXT_ROUTE, EXCLUDED_ROUTE, RESTORE_ROUTE, STATUS_ROUTE)
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -153,7 +158,22 @@ fun TsundokuApp(
                 )
             }
             composable(TopLevelDestination.SETTINGS.route) {
-                SettingsScreen(library = library, trash = trash, onOpenTrash = { navController.navigate(TRASH_ROUTE) })
+                SettingsScreen(
+                    container = container,
+                    onOpenTrash = { navController.navigate(TRASH_ROUTE) },
+                    onOpenExcluded = { navController.navigate(EXCLUDED_ROUTE) },
+                    onOpenRestore = { navController.navigate(RESTORE_ROUTE) },
+                    onOpenStatus = { navController.navigate(STATUS_ROUTE) },
+                )
+            }
+            composable(EXCLUDED_ROUTE) {
+                ExcludedFoldersScreen(container = container, onBack = { navController.popBackStack() })
+            }
+            composable(RESTORE_ROUTE) {
+                RestoreScreen(container = container, onBack = { navController.popBackStack() })
+            }
+            composable(STATUS_ROUTE) {
+                ScannerStatusScreen(container = container, onBack = { navController.popBackStack() })
             }
         }
     }
@@ -163,3 +183,6 @@ private const val BOOK_ROUTE = "book/{bookId}"
 private const val TRASH_ROUTE = "trash"
 private const val SERIES_ROUTE = "series/{key}"
 private const val UP_NEXT_ROUTE = "up-next"
+private const val EXCLUDED_ROUTE = "settings/excluded"
+private const val RESTORE_ROUTE = "settings/restore"
+private const val STATUS_ROUTE = "settings/status"

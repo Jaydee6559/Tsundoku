@@ -7,6 +7,8 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.OpenableColumns
 import com.tsundoku.app.data.db.BookDao
+import com.tsundoku.app.data.settings.AppPreferences
+import kotlinx.coroutines.flow.first
 import com.tsundoku.app.epub.EpubParser
 import com.tsundoku.app.epub.EpubResult
 import com.tsundoku.app.epub.FileFingerprint
@@ -42,6 +44,7 @@ class ShareImporter(
     private val dao: BookDao,
     private val library: LibraryRepository,
     private val upNext: UpNextRepository,
+    private val preferences: AppPreferences,
 ) {
     sealed interface Prepare {
         data class Ready(val book: PreparedBook) : Prepare
@@ -50,9 +53,10 @@ class ShareImporter(
 
     enum class FailReason { NOT_EPUB, TOO_BIG, UNREADABLE }
 
-    /** Where shared books are saved. Changeable in Settings later (Batch 12). */
-    val saveFolder: File get() = File(Environment.getExternalStorageDirectory(), SAVE_FOLDER)
-    val saveFolderLabel: String get() = SAVE_FOLDER
+    /** Where shared books are saved (Settings → Shared books folder), relative to internal storage. */
+    suspend fun saveFolderLabel(): String = preferences.shareFolder.first()
+
+    private suspend fun saveFolder(): File = File(Environment.getExternalStorageDirectory(), saveFolderLabel())
 
     suspend fun prepare(uri: Uri): Prepare = withContext(Dispatchers.IO) {
         val name = HomeRules.safeFileName(displayName(uri))
@@ -107,8 +111,9 @@ class ShareImporter(
     /** Saves the book into [saveFolder], adds it to the library (and Up next). Returns its path. */
     suspend fun import(book: PreparedBook, addToUpNext: Boolean): String? = withContext(Dispatchers.IO) {
         runCatching {
-            saveFolder.mkdirs()
-            val target = File(TrashRules.restoreTarget(File(saveFolder, book.fileName).path) { File(it).exists() })
+            val folder = saveFolder()
+            folder.mkdirs()
+            val target = File(TrashRules.restoreTarget(File(folder, book.fileName).path) { File(it).exists() })
             book.tempFile.copyTo(target, overwrite = false)
             book.tempFile.delete()
             library.syncPaths(setOf(target.absolutePath)) // reads it and adds it right away
@@ -136,7 +141,6 @@ class ShareImporter(
     }.getOrNull()
 
     private companion object {
-        const val SAVE_FOLDER = "Books/Tsundoku"
         const val MAX_BYTES = 200L * 1024 * 1024
         const val PREVIEW_WIDTH = 240
     }

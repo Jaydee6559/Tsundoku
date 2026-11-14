@@ -49,6 +49,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tsundoku.app.R
 import com.tsundoku.app.TsundokuApplication
+import com.tsundoku.app.data.settings.ThemeMode
+import com.tsundoku.app.ui.theme.isDark
+import androidx.compose.runtime.produceState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tsundoku.app.storage.StoragePermission
 import com.tsundoku.app.ui.components.CoverImage
 import com.tsundoku.app.ui.theme.TsundokuTheme
@@ -65,10 +69,12 @@ class ShareActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val uri = sharedUri(intent)
         val container = (application as TsundokuApplication).container
-        val importer = ShareImporter(this, container.bookDao, container.library, container.upNext)
+        val importer = ShareImporter(this, container.bookDao, container.library, container.upNext, container.preferences)
 
         setContent {
-            TsundokuTheme {
+            val themeMode by container.preferences.themeMode.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
+            val amoled by container.preferences.amoled.collectAsStateWithLifecycle(initialValue = false)
+            TsundokuTheme(darkTheme = themeMode.isDark(), amoledBlack = amoled) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     ShareScreen(
                         uri = uri,
@@ -204,7 +210,8 @@ private fun ShareScreen(uri: Uri?, importer: ShareImporter, onDone: (String?) ->
                         Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Outlined.Folder, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
-                            Text(importer.saveFolderLabel, style = MaterialTheme.typography.bodyMedium)
+                            val folderLabel by produceState("") { value = importer.saveFolderLabel() }
+                            Text(folderLabel, style = MaterialTheme.typography.bodyMedium)
                         }
                     }
                     Row(

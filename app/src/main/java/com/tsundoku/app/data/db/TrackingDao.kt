@@ -22,6 +22,18 @@ interface TrackingDao {
     @Upsert
     suspend fun upsert(tracking: TrackingEntity)
 
+    @Query("SELECT * FROM tracking")
+    suspend fun getAll(): List<TrackingEntity>
+
+    @Query("SELECT * FROM status_events ORDER BY at")
+    suspend fun getAllEvents(): List<StatusEventEntity>
+
+    @Query("SELECT COUNT(*) FROM status_events WHERE bookId = :bookId")
+    suspend fun countEvents(bookId: Long): Int
+
+    @Query("SELECT book_tags.bookId AS bookId, tags.name AS name FROM book_tags INNER JOIN tags ON tags.id = book_tags.tagId")
+    suspend fun getAllTagNames(): List<BookTagName>
+
     @Insert
     suspend fun insertEvent(event: StatusEventEntity)
 

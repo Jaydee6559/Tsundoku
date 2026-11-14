@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tsundoku.app.AppContainer
 import com.tsundoku.app.data.settings.AppPreferences
 import com.tsundoku.app.library.LibraryRepository
 import com.tsundoku.app.library.LiveWatcher
@@ -47,6 +48,7 @@ fun AppRoot(
     series: SeriesRepository,
     upNext: UpNextRepository,
     watcher: LiveWatcher,
+    container: AppContainer,
 ) {
     val scope = rememberCoroutineScope()
     val onboardingDone by preferences.onboardingDone.collectAsStateWithLifecycle(initialValue = null)
@@ -85,6 +87,7 @@ fun AppRoot(
                 library.startScan()
                 watcher.refresh() // start watching folders for instant updates
                 trash.purgeExpiredInBackground() // books in Trash for 30+ days
+                container.backup.backupIfDue() // daily automatic backup
                 val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
                     PackageManager.PERMISSION_GRANTED
                 if (!granted) askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -96,6 +99,7 @@ fun AppRoot(
                 series = series,
                 upNext = upNext,
                 preferences = preferences,
+                container = container,
             )
         }
     }

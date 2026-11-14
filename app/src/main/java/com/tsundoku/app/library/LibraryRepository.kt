@@ -37,6 +37,14 @@ class LibraryRepository(
     private val _quietResults = MutableSharedFlow<ScanState.Done>(extraBufferCapacity = 8)
     val quietResults: SharedFlow<ScanState.Done> = _quietResults.asSharedFlow()
 
+    /** The most recent full scan (on screen or in the background), with when it finished. */
+    private val _lastFullScan = MutableStateFlow<Pair<ScanState.Done, Long>?>(null)
+    val lastFullScan: StateFlow<Pair<ScanState.Done, Long>?> = _lastFullScan.asStateFlow()
+
+    val libraryCount: Flow<Int> = dao.observeLibraryCount()
+    val missingCount: Flow<Int> = dao.observeMissingCount()
+    val brokenCount: Flow<Int> = dao.observeBrokenCount()
+
     private val scanQueued = AtomicBoolean(false)
 
     /** Starts a full scan unless one is already running or waiting. Shows progress on screen. */
@@ -44,7 +52,8 @@ class LibraryRepository(
         if (!scanQueued.compareAndSet(false, true)) return
         scope.launch {
             try {
-                lock.withLock { scanner.scan { _scanState.value = it } }
+                val done = lock.withLock { scanner.scan { _scanState.value = it } }
+                _lastFullScan.value = done to System.currentTimeMillis()
             } catch (e: CancellationException) {
                 throw e
             } catch (t: Throwable) {
@@ -59,7 +68,10 @@ class LibraryRepository(
     /** Full scan that waits for the result, without on-screen progress (background job). */
     suspend fun scanQuietly(): ScanState.Done? = runCatching {
         lock.withLock { scanner.scan {} }
-    }.getOrNull()?.also { _quietResults.tryEmit(it) }
+    }.getOrNull()?.also {
+        _lastFullScan.value = it to System.currentTimeMillis()
+        _quietResults.tryEmit(it)
+    }
 
     /** Updates only the given files (reported by the folder watcher). */
     suspend fun syncPaths(paths: Set<String>): ScanState.Done? = runCatching {

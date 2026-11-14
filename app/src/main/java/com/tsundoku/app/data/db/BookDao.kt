@@ -38,6 +38,23 @@ abstract class BookDao {
     @Query("SELECT id FROM books WHERE path = :path")
     abstract suspend fun idForPath(path: String): Long?
 
+    /** Best match for a backup entry: books on the phone first, then missing, then trashed. */
+    @Query("SELECT * FROM books WHERE fingerprint = :fingerprint ORDER BY (trashedAt IS NOT NULL), isMissing LIMIT 1")
+    abstract suspend fun findByFingerprint(fingerprint: String): BookEntity?
+
+    @Query("SELECT * FROM books WHERE path = :path LIMIT 1")
+    abstract suspend fun findByPath(path: String): BookEntity?
+
+    // ---- counts for the Scanner status screen
+    @Query("SELECT COUNT(*) FROM books WHERE trashedAt IS NULL AND isMissing = 0")
+    abstract fun observeLibraryCount(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM books WHERE trashedAt IS NULL AND isMissing = 1")
+    abstract fun observeMissingCount(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM books WHERE trashedAt IS NULL AND isMissing = 0 AND parseError IS NOT NULL")
+    abstract fun observeBrokenCount(): Flow<Int>
+
     @Query("DELETE FROM books WHERE id IN (:ids)")
     abstract suspend fun deleteByIds(ids: List<Long>)
 

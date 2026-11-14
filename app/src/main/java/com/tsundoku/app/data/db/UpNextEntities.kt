@@ -35,6 +35,9 @@ interface UpNextDao {
     @Query("SELECT bookId FROM up_next")
     fun observeIds(): Flow<List<Long>>
 
+    @Query("SELECT * FROM up_next ORDER BY position")
+    suspend fun getAll(): List<UpNextEntity>
+
     @Query("SELECT bookId FROM up_next ORDER BY position")
     suspend fun orderedIds(): List<Long>
 

@@ -13,6 +13,7 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.tsundoku.app.data.settings.ThemeMode
 
 private val LightColors: ColorScheme = lightColorScheme(
     primary = PaperAccent,
@@ -125,4 +126,12 @@ object TsundokuTheme {
     val statusColors: StatusColors
         @Composable @ReadOnlyComposable
         get() = LocalStatusColors.current
+}
+
+/** Resolves the Settings choice: System follows the phone, Light/Dark force it. */
+@Composable
+fun ThemeMode.isDark(): Boolean = when (this) {
+    ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    ThemeMode.LIGHT -> false
+    ThemeMode.DARK -> true
 }
