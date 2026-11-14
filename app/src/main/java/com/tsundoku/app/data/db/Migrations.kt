@@ -84,5 +84,17 @@ object Migrations {
         }
     }
 
-    val ALL = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+    /** v6 -> v7: remembers books deleted forever, so identical copies don't come back. */
+    val MIGRATION_6_7 = object : Migration(6, 7) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `deleted_books` (" +
+                    "`fingerprint` TEXT NOT NULL, `title` TEXT NOT NULL, `deletedAt` INTEGER NOT NULL, " +
+                    "`timesRemoved` INTEGER NOT NULL, `lastSeenPath` TEXT, `lastSeenAt` INTEGER, " +
+                    "PRIMARY KEY(`fingerprint`))",
+            )
+        }
+    }
+
+    val ALL = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
 }

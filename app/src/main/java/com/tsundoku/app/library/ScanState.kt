@@ -28,6 +28,8 @@ sealed interface ScanState {
         val folders: List<FolderCount>,
         /** Titles of the first few new books (for the "novels added" notification). */
         val addedTitles: List<String> = emptyList(),
+        /** Copies of books you deleted forever that showed up again and were deleted. */
+        val removedAgain: Int = 0,
     ) : ScanState
 
     data class Failed(val message: String) : ScanState

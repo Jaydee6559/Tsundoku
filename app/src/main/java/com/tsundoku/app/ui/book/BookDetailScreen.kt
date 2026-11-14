@@ -28,6 +28,7 @@ import androidx.compose.material.icons.automirrored.outlined.PlaylistAdd
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Remove
@@ -95,6 +96,7 @@ fun BookDetailScreen(
 ) {
     val queued by upNext.ids.collectAsStateWithLifecycle(initialValue = emptySet())
     val upNextScope = rememberCoroutineScope()
+    var confirmForever by rememberSaveable { mutableStateOf(false) }
     val vm: BookDetailViewModel = viewModel(key = "book-$bookId") { BookDetailViewModel(bookId, tracking) }
     val state by vm.state.collectAsStateWithLifecycle()
 
@@ -110,15 +112,37 @@ fun BookDetailScreen(
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.detail_back))
             }
             Spacer(Modifier.weight(1f))
-            if (state.detail?.book?.trashedAt == null && state.detail != null) {
-                IconButton(onClick = {
-                    trash.moveToTrashInBackground(listOf(bookId))
-                    Toast.makeText(context, context.getString(R.string.trash_moved, 1), Toast.LENGTH_SHORT).show()
-                    onBack()
-                }) {
-                    Icon(Icons.Outlined.DeleteOutline, contentDescription = stringResource(R.string.detail_delete))
+            if (state.detail != null) {
+                if (state.detail?.book?.trashedAt == null) {
+                    IconButton(onClick = {
+                        trash.moveToTrashInBackground(listOf(bookId))
+                        Toast.makeText(context, context.getString(R.string.trash_moved, 1), Toast.LENGTH_SHORT).show()
+                        onBack()
+                    }) {
+                        Icon(Icons.Outlined.DeleteOutline, contentDescription = stringResource(R.string.detail_delete))
+                    }
+                }
+                IconButton(onClick = { confirmForever = true }) {
+                    Icon(Icons.Outlined.DeleteForever, contentDescription = stringResource(R.string.detail_delete_forever))
                 }
             }
+        }
+        if (confirmForever) {
+            val title = state.detail?.book?.title.orEmpty()
+            AlertDialog(
+                onDismissRequest = { confirmForever = false },
+                title = { Text(stringResource(R.string.trash_confirm_one_title)) },
+                text = { Text(stringResource(R.string.detail_delete_forever_body, title)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        confirmForever = false
+                        trash.deleteNowInBackground(listOf(bookId))
+                        Toast.makeText(context, context.getString(R.string.detail_deleted_forever), Toast.LENGTH_SHORT).show()
+                        onBack()
+                    }) { Text(stringResource(R.string.trash_delete_forever), color = TsundokuTheme.statusColors.droppedInk) }
+                },
+                dismissButton = { TextButton(onClick = { confirmForever = false }) { Text(stringResource(R.string.action_cancel)) } },
+            )
         }
         val detail = state.detail
         when {

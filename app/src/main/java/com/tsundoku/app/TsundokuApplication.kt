@@ -11,6 +11,7 @@ import com.tsundoku.app.library.ScanState
 import com.tsundoku.app.library.SeriesRepository
 import com.tsundoku.app.library.UpNextRepository
 import com.tsundoku.app.data.db.BookDao
+import com.tsundoku.app.data.db.DeletedBookDao
 import com.tsundoku.app.backup.BackupManager
 import com.tsundoku.app.library.LibraryScanner
 import com.tsundoku.app.library.TrackingRepository
@@ -65,6 +66,7 @@ class AppContainer(application: Application) {
                 dao = database.bookDao(),
                 coversDir = File(application.filesDir, "covers"),
                 excludedFolders = { preferences.excludedFoldersNow() },
+                deletedBooks = database.deletedBookDao(),
             ),
             scope = appScope,
             lock = libraryLock,
@@ -80,8 +82,11 @@ class AppContainer(application: Application) {
             coversDir = File(application.filesDir, "covers"),
             scope = appScope,
             lock = libraryLock,
+            deletedBooks = database.deletedBookDao(),
         )
     }
+
+    val deletedBookDao: DeletedBookDao get() = database.deletedBookDao()
 
     val series: SeriesRepository by lazy { SeriesRepository(database, tracking) }
 

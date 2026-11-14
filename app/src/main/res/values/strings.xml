@@ -215,6 +215,9 @@
     <string name="open_no_reader">No EPUB reader found. Install ReadEra to open books.</string>
     <string name="detail_not_found">This book is no longer in your library.</string>
     <string name="detail_delete">Move to Trash</string>
+    <string name="detail_delete_forever">Delete forever</string>
+    <string name="detail_delete_forever_body">\"%1$s\" will be deleted from your phone now, skipping Trash, along with its reading data. If an identical copy shows up again later, Tsundoku deletes it too. This can\'t be undone.</string>
+    <string name="detail_deleted_forever">Deleted forever</string>
 
     <!-- Trash -->
     <string name="trash_title">Trash</string>
@@ -250,6 +253,14 @@
     <!-- Settings (temporary, full screen in Batch 12) -->
     <string name="settings_trash">Trash</string>
     <string name="settings_trash_sub">%1$d books · auto-delete after 30 days</string>
+    <string name="settings_deleted">Deleted forever</string>
+    <string name="settings_deleted_sub">%1$d books · copies removed again: %2$d</string>
+    <string name="deleted_title">Deleted forever</string>
+    <string name="deleted_body">Books you deleted forever. If an identical copy appears on your phone again (for example another app saves it again), Tsundoku deletes it too and shows where it was found. Allow a book again if you want it back.</string>
+    <string name="deleted_none">Nothing here. Books you delete forever are listed here.</string>
+    <string name="deleted_when">Deleted %1$s</string>
+    <string name="deleted_removed_again">Removed again %1$d× · last found in %2$s</string>
+    <string name="deleted_allow">Allow again</string>
     <string name="settings_scan">Scan now</string>
     <string name="settings_scan_sub">Look for new, moved or deleted EPUBs</string>
     <string name="settings_section_library">Library</string>

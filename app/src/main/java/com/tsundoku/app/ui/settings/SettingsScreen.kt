@@ -24,6 +24,7 @@ import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.FolderOff
 import androidx.compose.material.icons.outlined.FolderOpen
@@ -66,11 +67,13 @@ fun SettingsScreen(
     onOpenStatus: () -> Unit,
     onOpenDuplicates: () -> Unit,
     onOpenStats: () -> Unit,
+    onOpenDeleted: () -> Unit,
 ) {
     val prefs = container.preferences
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val trashed by container.trash.trashed.collectAsStateWithLifecycle(initialValue = emptyList())
+    val deletedForever by container.trash.deletedForever.collectAsStateWithLifecycle(initialValue = emptyList())
     val excluded by prefs.excludedFolders.collectAsStateWithLifecycle(initialValue = emptySet())
     val shareFolder by prefs.shareFolder.collectAsStateWithLifecycle(initialValue = "")
     val theme by prefs.themeMode.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
@@ -162,6 +165,14 @@ fun SettingsScreen(
 
         Section(stringResource(R.string.settings_section_more)) {
             SettingRow(Icons.Outlined.DeleteOutline, stringResource(R.string.settings_trash), stringResource(R.string.settings_trash_sub, trashed.size), onClick = onOpenTrash, chevron = true)
+            Divider()
+            SettingRow(
+                Icons.Outlined.DeleteForever,
+                stringResource(R.string.settings_deleted),
+                stringResource(R.string.settings_deleted_sub, deletedForever.size, deletedForever.sumOf { it.timesRemoved }),
+                onClick = onOpenDeleted,
+                chevron = true,
+            )
         }
 
         val version = runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull().orEmpty()

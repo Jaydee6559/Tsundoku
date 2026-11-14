@@ -32,6 +32,7 @@ import com.tsundoku.app.ui.series.SeriesDetailScreen
 import com.tsundoku.app.ui.series.SeriesListScreen
 import android.net.Uri
 import com.tsundoku.app.AppContainer
+import com.tsundoku.app.ui.settings.DeletedForeverScreen
 import com.tsundoku.app.ui.settings.DuplicatesScreen
 import com.tsundoku.app.ui.settings.ExcludedFoldersScreen
 import com.tsundoku.app.ui.stats.StatsScreen
@@ -57,7 +58,7 @@ fun TsundokuApp(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     // Full-height screens: no bottom bar there.
-    val showBottomBar = currentDestination?.route !in setOf(BOOK_ROUTE, TRASH_ROUTE, SERIES_ROUTE, UP_NEXT_ROUTE, EXCLUDED_ROUTE, RESTORE_ROUTE, STATUS_ROUTE, DUPLICATES_ROUTE, STATS_ROUTE)
+    val showBottomBar = currentDestination?.route !in setOf(BOOK_ROUTE, TRASH_ROUTE, SERIES_ROUTE, UP_NEXT_ROUTE, EXCLUDED_ROUTE, RESTORE_ROUTE, STATUS_ROUTE, DUPLICATES_ROUTE, STATS_ROUTE, DELETED_ROUTE)
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -168,6 +169,7 @@ fun TsundokuApp(
                     onOpenStatus = { navController.navigate(STATUS_ROUTE) },
                     onOpenDuplicates = { navController.navigate(DUPLICATES_ROUTE) },
                     onOpenStats = { navController.navigate(STATS_ROUTE) },
+                    onOpenDeleted = { navController.navigate(DELETED_ROUTE) },
                 )
             }
             composable(EXCLUDED_ROUTE) {
@@ -182,6 +184,9 @@ fun TsundokuApp(
                     onBack = { navController.popBackStack() },
                     onOpenBook = { id -> navController.navigate("book/$id") },
                 )
+            }
+            composable(DELETED_ROUTE) {
+                DeletedForeverScreen(container = container, onBack = { navController.popBackStack() })
             }
             composable(STATS_ROUTE) {
                 StatsScreen(container = container, onBack = { navController.popBackStack() })
@@ -202,3 +207,4 @@ private const val RESTORE_ROUTE = "settings/restore"
 private const val STATUS_ROUTE = "settings/status"
 private const val DUPLICATES_ROUTE = "settings/duplicates"
 private const val STATS_ROUTE = "stats"
+private const val DELETED_ROUTE = "settings/deleted"

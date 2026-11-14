@@ -2,6 +2,7 @@ package com.tsundoku.app.library
 
 import com.tsundoku.app.data.db.BookDao
 import com.tsundoku.app.data.db.BookEntity
+import com.tsundoku.app.data.db.DeletedBookDao
 import com.tsundoku.app.epub.EpubParser
 import com.tsundoku.app.epub.EpubResult
 import com.tsundoku.app.epub.FileFingerprint
@@ -28,6 +29,8 @@ class LibraryScanner(
     private val coversDir: File,
     /** Folders you chose to ignore (Settings → Excluded folders). Books there count as missing. */
     private val excludedFolders: suspend () -> Set<String> = { emptySet() },
+    /** Books you deleted forever: identical copies that reappear are deleted again, not added. */
+    private val deletedBooks: DeletedBookDao? = null,
 ) {
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -101,14 +104,24 @@ class LibraryScanner(
         plan.reappeared.chunked(BookDao.CHUNK).forEach { dao.markPresent(it, now) }
         plan.missing.chunked(BookDao.CHUNK).forEach { dao.markMissing(it, now) }
 
-        val total = plan.newFiles.size + plan.changed.size
+        // A new file identical to a book you deleted forever is removed again instead of added.
+        val blocked = deletedBooks?.fingerprints()?.toHashSet().orEmpty()
+        val (reappeared, newFiles) = plan.newFiles.partition { (_, fp) ->
+            fp in blocked && !fp.startsWith(UNREADABLE_PREFIX)
+        }
+        for ((file, fp) in reappeared) {
+            val f = File(file.path)
+            if (!f.exists() || f.delete() || !f.exists()) deletedBooks?.recordRemovedAgain(fp, file.path, now)
+        }
+
+        val total = newFiles.size + plan.changed.size
         val processed = AtomicInteger(0)
         val broken = AtomicInteger(0)
         val addedTitles = mutableListOf<String>()
         fun report() = onProgress(ScanState.Reading(foundCount, processed.get(), total, folders))
         report()
 
-        plan.newFiles.chunked(BATCH).forEach { batch ->
+        newFiles.chunked(BATCH).forEach { batch ->
             val entities = batch.map { (file, fp) ->
                 async(io) {
                     safeReadBook(file, fp, root, addedAt = now).also {
@@ -140,7 +153,8 @@ class LibraryScanner(
 
         ScanState.Done(
             found = foundCount,
-            added = plan.newFiles.size,
+            added = newFiles.size,
+            removedAgain = reappeared.size,
             updated = plan.changed.size,
             moved = plan.moved.size,
             missing = plan.missing.size,
@@ -155,7 +169,7 @@ class LibraryScanner(
     private fun safeFingerprint(file: FoundFile): String = try {
         FileFingerprint.compute(File(file.path))
     } catch (e: Exception) {
-        "unreadable-${file.sizeBytes}-${file.path.hashCode()}"
+        "$UNREADABLE_PREFIX${file.sizeBytes}-${file.path.hashCode()}"
     }
 
     /**
@@ -240,5 +254,6 @@ class LibraryScanner(
         const val PARALLELISM = 4
         const val BATCH = 40
         const val MAX_TITLES = 5
+        const val UNREADABLE_PREFIX = "unreadable-"
     }
 }

@@ -19,8 +19,9 @@ import androidx.room.RoomDatabase
         StatusEventEntity::class,
         SeriesInfoEntity::class,
         UpNextEntity::class,
+        DeletedBookEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
 )
 abstract class TsundokuDatabase : RoomDatabase() {
@@ -28,6 +29,7 @@ abstract class TsundokuDatabase : RoomDatabase() {
     abstract fun trackingDao(): TrackingDao
     abstract fun seriesDao(): SeriesDao
     abstract fun upNextDao(): UpNextDao
+    abstract fun deletedBookDao(): DeletedBookDao
 
     companion object {
         private const val NAME = "tsundoku.db"

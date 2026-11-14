@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.OpenableColumns
 import com.tsundoku.app.data.db.BookDao
+import com.tsundoku.app.data.db.DeletedBookDao
 import com.tsundoku.app.data.settings.AppPreferences
 import kotlinx.coroutines.flow.first
 import com.tsundoku.app.epub.EpubParser
@@ -45,6 +46,7 @@ class ShareImporter(
     private val library: LibraryRepository,
     private val upNext: UpNextRepository,
     private val preferences: AppPreferences,
+    private val deletedBooks: DeletedBookDao,
 ) {
     sealed interface Prepare {
         data class Ready(val book: PreparedBook) : Prepare
@@ -111,6 +113,8 @@ class ShareImporter(
     /** Saves the book into [saveFolder], adds it to the library (and Up next). Returns its path. */
     suspend fun import(book: PreparedBook, addToUpNext: Boolean): String? = withContext(Dispatchers.IO) {
         runCatching {
+            // Sharing a book you once deleted forever means you want it back: stop blocking it.
+            runCatching { deletedBooks.allow(FileFingerprint.compute(book.tempFile)) }
             val folder = saveFolder()
             folder.mkdirs()
             val target = File(TrashRules.restoreTarget(File(folder, book.fileName).path) { File(it).exists() })

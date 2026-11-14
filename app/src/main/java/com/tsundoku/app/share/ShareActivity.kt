@@ -69,7 +69,7 @@ class ShareActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val uri = sharedUri(intent)
         val container = (application as TsundokuApplication).container
-        val importer = ShareImporter(this, container.bookDao, container.library, container.upNext, container.preferences)
+        val importer = ShareImporter(this, container.bookDao, container.library, container.upNext, container.preferences, container.deletedBookDao)
 
         setContent {
             val themeMode by container.preferences.themeMode.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)

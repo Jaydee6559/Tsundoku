@@ -2,6 +2,8 @@ package com.tsundoku.app.library
 
 import com.tsundoku.app.data.db.BookDao
 import com.tsundoku.app.data.db.BookEntity
+import com.tsundoku.app.data.db.DeletedBookDao
+import com.tsundoku.app.data.db.DeletedBookEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -25,6 +27,8 @@ class TrashRepository(
     private val scope: CoroutineScope,
     /** Shared with scans and live syncs, so file moves and database updates never interleave. */
     private val lock: Mutex,
+    /** Remembers books deleted forever, so identical copies that reappear get deleted too. */
+    private val deletedBooks: DeletedBookDao,
 ) {
     private val trashDir: File get() = File(storageRoot(), ".tsundoku/trash")
 
@@ -80,16 +84,54 @@ class TrashRepository(
     /** Permanently deletes books from Trash: file, cover thumbnail and all tracking data. */
     suspend fun deleteForever(ids: Collection<Long>): Int = locked {
         val trashed = dao.getByIds(ids.toList()).filter { it.trashedAt != null }
+        eraseNow(trashed)
+    }
+
+    /**
+     * Deletes books straight away, skipping Trash (always confirmed in the UI). Use for copies
+     * you never want back. Returns how many were deleted.
+     */
+    suspend fun deleteNow(ids: Collection<Long>): Int = locked {
+        eraseNow(dao.getByIds(ids.toList()))
+    }
+
+    /** Deletes the files, forgets the books, and remembers their fingerprints. Call inside [locked]. */
+    private suspend fun eraseNow(candidates: List<BookEntity>): Int {
         // Only forget a book once its file is really gone. If Android refuses to delete it,
-        // it stays in Trash instead of silently lingering on storage (and coming back later).
-        val books = trashed.filter { book ->
+        // it stays where it is instead of silently lingering on storage.
+        val books = candidates.filter { book ->
             val file = File(book.path)
             !file.exists() || file.delete() || !file.exists()
         }
+        val now = System.currentTimeMillis()
+        books.forEach { book ->
+            if (!book.fingerprint.startsWith("unreadable-")) {
+                deletedBooks.insert(
+                    DeletedBookEntity(
+                        fingerprint = book.fingerprint,
+                        title = book.title,
+                        deletedAt = now,
+                        timesRemoved = 0,
+                        lastSeenPath = null,
+                        lastSeenAt = null,
+                    ),
+                )
+            }
+        }
         books.map { it.id }.chunked(BookDao.CHUNK).forEach { dao.deleteByIds(it) }
         books.forEach { removeUnusedThumb(it) }
-        books.size
+        return books.size
     }
+
+    val deletedForever: Flow<List<DeletedBookEntity>> = deletedBooks.observeAll()
+
+    /** Same as [deleteNow], but keeps running after the calling screen closes. */
+    fun deleteNowInBackground(ids: Collection<Long>) {
+        scope.launch { deleteNow(ids) }
+    }
+
+    /** Lets a deleted-forever book come back (e.g. you want to read it again after all). */
+    suspend fun allowAgain(fingerprint: String) = deletedBooks.allow(fingerprint)
 
     suspend fun emptyTrash(): Int = deleteForever(dao.getTrashed().map { it.id })
 
@@ -116,7 +158,8 @@ class TrashRepository(
         return runCatching {
             src.copyTo(dest, overwrite = false)
             if (dest.length() == src.length()) {
-                src.delete()
+                // Couldn't remove the original: undo the copy so no stray file is left behind.
+                src.delete().also { ok -> if (!ok) dest.delete() }
             } else {
                 dest.delete() // incomplete copy: keep the original, report failure
                 false
